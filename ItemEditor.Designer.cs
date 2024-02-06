@@ -167,7 +167,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "ItemEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Item Editor";
+            this.Text = "Add or Edit Game";
             this.ResumeLayout(false);
             this.PerformLayout();
 

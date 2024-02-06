@@ -11,9 +11,11 @@ namespace GameLauncher
 {
     public partial class Launcher : Form
     {
-        public List<Game> games = new List<Game>();
-        public Game selectedGame = new Game("","","","");
+        private List<Game> games = new List<Game>();
+        private Game selectedGame = new Game("","","","");
+        private Game currentlyPlaying = null;
         private Timer processCheck = new Timer();
+        private Dictionary<string, Timer> gameTimers = new Dictionary<string, Timer>();
         private string configJSON = $@"{Environment.CurrentDirectory}\config.json";
         private FileStream stream;
         private StreamReader reader;
@@ -22,16 +24,35 @@ namespace GameLauncher
         public Launcher()
         {
             InitializeComponent();
+
             SetupLauncher();
             processCheck.Tick += (object sender, EventArgs e) =>
             {
                 try
                 {
                     var friendlyName = selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", "");
+
+                    if (gameTimers.ContainsKey(friendlyName))
+                    {
+                        var time = Convert.ToInt16(gameTimers[friendlyName].Tag) / 3600f + "";
+                        var playTimeCounter = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
+                        if (selectedGame == currentlyPlaying && playTimeLabel.Text != playTimeCounter)
+                            playTimeLabel.Text = playTimeCounter;
+                    }
+
                     if (Process.GetProcessesByName(friendlyName).Length == 0)
                     {
+                        if (gameTimers.ContainsKey(friendlyName))
+                        {
+                            gameTimers[friendlyName].Enabled = false;
+                            games[games.IndexOf(currentlyPlaying, 0)].PlayTime = Convert.ToInt16(gameTimers[friendlyName].Tag);
+                            UpdateData();
+                            gameTimers[friendlyName].Dispose();
+                            gameTimers.Remove(friendlyName);
+                        }
                         launchGame.Text = "Play";
                         launchGame.Enabled = true;
+                        currentlyPlaying = null;
                     }
                     else
                     {
@@ -65,7 +86,14 @@ namespace GameLauncher
             else
                 selectedGameName.Visible =
                     launchGame.Visible =
-                    selectedGameArt.Visible = false;
+                    selectedGameArt.Visible =
+                        playTimeContainer.Visible = false;
+        }
+
+        private void UpdateData()
+        {
+            stream.SetLength(0);
+            writer.Write(JsonConvert.SerializeObject(games));
         }
 
         private void addGameButton_Click(object sender, EventArgs e)
@@ -83,15 +111,14 @@ namespace GameLauncher
                     editor.gameArtwork.Text
                 ));
 
-                var data = JsonConvert.SerializeObject(games);
-                stream.SetLength(0);
-                writer.Write(data);
+                UpdateData();
 
                 gameList.SelectedNode = gameList.Nodes.Add(editor.gameName.Text);
 
                 selectedGameName.Visible =
                     launchGame.Visible =
-                    selectedGameArt.Visible = true;
+                    selectedGameArt.Visible =
+                        playTimeContainer.Visible = true;
             }
         }
 
@@ -104,22 +131,19 @@ namespace GameLauncher
 
                 selectedGameName.Visible =
                         launchGame.Visible =
-                        selectedGameArt.Visible = true;
+                        selectedGameArt.Visible =
+                        playTimeContainer.Visible = true;
 
                 selectedGame = games[e.Node.Index];
-
                 selectedGameName.Text = selectedGame.Name;
+                var time = selectedGame.PlayTime / 3600f + "";
+                playTimeLabel.Text = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
 
-                if (selectedGame.ArtworkPath == string.Empty)
+                if (selectedGame.ArtworkPath == string.Empty || selectedGame.ArtworkPath == "USE_APP_ICON")
                 {
                     games[e.Node.Index].ArtworkPath = "USE_APP_ICON";
-                    var data = JsonConvert.SerializeObject(games);
-                    stream.SetLength(0);
-                    writer.Write(data);
-                }
+                    UpdateData();
 
-                if (selectedGame.ArtworkPath == "USE_APP_ICON")
-                {
                     IntPtr hIcon = Shell32.GetJumboIcon(Shell32.GetIconIndex(selectedGame.Location));
                     Icon icon = (Icon)Icon.FromHandle(hIcon).Clone();
                     selectedGameArt.Image = icon.ToBitmap();
@@ -134,15 +158,28 @@ namespace GameLauncher
 
         private void launchGame_Click(object sender, EventArgs e)
         {
-            try
+            if (currentlyPlaying != null)
             {
-                Process.Start(selectedGame.Location, selectedGame.Arguments);
-                launchGame.Text = "Started";
-                launchGame.Enabled = false;
+                MessageBox.Show("You can only play 1 game at a time!", "Game Launcher", MessageBoxButtons.OK);
             }
-            catch (Exception er)
-            { 
-                MessageBox.Show(er.Message);
+            else
+            {
+                try
+                {
+                    currentlyPlaying = selectedGame;
+                    Process.Start(selectedGame.Location, selectedGame.Arguments);
+                    Timer gameTimer = new Timer() { Interval = 1000 };
+                    gameTimer.Tag = selectedGame.PlayTime;
+                    gameTimer.Tick += (object s, EventArgs ee) => { (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1; };
+                    gameTimer.Enabled = true;
+                    gameTimers.Add(selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", ""), gameTimer);
+                    launchGame.Text = "Started";
+                    launchGame.Enabled = false;
+                }
+                catch (Exception er)
+                {
+                    MessageBox.Show(er.Message);
+                }
             }
         }
 
@@ -163,7 +200,8 @@ namespace GameLauncher
                     editor.gameName.Text,
                     editor.gameLocation.Text,
                     editor.gameArguments.Text,
-                    editor.gameArtwork.Text
+                    editor.gameArtwork.Text,
+                    selectedGame.PlayTime
                 );
 
                 gameList.SelectedNode.Text = editor.gameName.Text;
@@ -184,8 +222,7 @@ namespace GameLauncher
                     selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
                 }
 
-                stream.SetLength(0);
-                writer.Write(JsonConvert.SerializeObject(games));
+                UpdateData();
             }
         }
 
@@ -200,9 +237,9 @@ namespace GameLauncher
                 else
                     selectedGameName.Visible =
                         launchGame.Visible =
-                        selectedGameArt.Visible = false;
-                stream.SetLength(0);
-                writer.Write(JsonConvert.SerializeObject(games));
+                        selectedGameArt.Visible =
+                        playTimeContainer.Visible = false;
+                UpdateData();
             }
         }
     }

@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace GameLauncher
+﻿namespace GameLauncher
 {
     public class Game
     {
@@ -8,13 +6,15 @@ namespace GameLauncher
         public string Location { get; set; }
         public string Arguments { get; set; }
         public string ArtworkPath { get; set; }
+        public int PlayTime { get; set; }
 
-        public Game(string name, string location, string arguments, string artworkPath)
+        public Game(string name, string location, string arguments, string artworkPath, int playTime = 0)
         {
             Name = name;
             Location = location;
             Arguments = arguments;
             ArtworkPath = artworkPath;
+            PlayTime = playTime;
         }
     }
 }
