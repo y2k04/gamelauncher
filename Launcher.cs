@@ -14,7 +14,7 @@ namespace GameLauncher
         private List<Game> games = new List<Game>();
         private Game selectedGame = new Game("", "", "", "");
         private Timer processCheck = new Timer();
-        private Dictionary<string, Timer> gameTimers = new Dictionary<string, Timer>();
+        private Dictionary<Game, Timer> gameTimers = new Dictionary<Game, Timer>();
         private string configJSON = $@"{Environment.CurrentDirectory}\config.json";
         private FileStream stream;
         private StreamReader reader;
@@ -33,12 +33,12 @@ namespace GameLauncher
 
                     if (Process.GetProcessesByName(friendlyName).Length == 0)
                     {
-                        if (gameTimers.ContainsKey(friendlyName))
+                        if (gameTimers.ContainsKey(selectedGame))
                         {
-                            gameTimers[friendlyName].Enabled = false;
-                            games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToInt16(gameTimers[friendlyName].Tag);
+                            gameTimers[selectedGame].Enabled = false;
+                            games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToInt16(gameTimers[selectedGame].Tag);
                             UpdateData();
-                            gameTimers.Remove(friendlyName);
+                            gameTimers.Remove(selectedGame);
                         }
                         launchGame.Text = "Play";
                         launchGame.Enabled = true;
@@ -48,12 +48,18 @@ namespace GameLauncher
                         launchGame.Text = "Started";
                         launchGame.Enabled = false;
 
-                        if (gameTimers.ContainsKey(friendlyName))
+                        if (gameTimers.ContainsKey(selectedGame))
                         {
-                            var time = Convert.ToInt16(gameTimers[friendlyName].Tag) / 3600f + "";
+                            var time = Convert.ToInt16(gameTimers[selectedGame].Tag) / 3600f + "";
                             var playTimeCounter = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
                             if (playTimeLabel.Text != playTimeCounter)
                                 playTimeLabel.Text = playTimeCounter;
+                        } else
+                        {
+                            Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
+                            gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1;
+                            gameTimer.Enabled = true;
+                            gameTimers.Add(selectedGame, gameTimer);
                         }
                     }
                 }
@@ -161,7 +167,7 @@ namespace GameLauncher
                 Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
                 gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1;
                 gameTimer.Enabled = true;
-                gameTimers.Add(selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", ""), gameTimer);
+                gameTimers.Add(selectedGame, gameTimer);
                 launchGame.Text = "Started";
                 launchGame.Enabled = false;
             }
@@ -173,6 +179,13 @@ namespace GameLauncher
 
         private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
         {
+            foreach (var timer in gameTimers)
+            {
+                timer.Value.Enabled = false;
+                games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToInt16(timer.Value.Tag);
+                UpdateData();
+                gameTimers.Remove(timer.Key);
+            }
             stream.Close();
         }
 
