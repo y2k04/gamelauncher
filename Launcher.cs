@@ -12,8 +12,7 @@ namespace GameLauncher
     public partial class Launcher : Form
     {
         private List<Game> games = new List<Game>();
-        private Game selectedGame = new Game("","","","");
-        private Game currentlyPlaying = null;
+        private Game selectedGame = new Game("", "", "", "");
         private Timer processCheck = new Timer();
         private Dictionary<string, Timer> gameTimers = new Dictionary<string, Timer>();
         private string configJSON = $@"{Environment.CurrentDirectory}\config.json";
@@ -32,32 +31,30 @@ namespace GameLauncher
                 {
                     var friendlyName = selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", "");
 
-                    if (gameTimers.ContainsKey(friendlyName))
-                    {
-                        var time = Convert.ToInt16(gameTimers[friendlyName].Tag) / 3600f + "";
-                        var playTimeCounter = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
-                        if (selectedGame == currentlyPlaying && playTimeLabel.Text != playTimeCounter)
-                            playTimeLabel.Text = playTimeCounter;
-                    }
-
                     if (Process.GetProcessesByName(friendlyName).Length == 0)
                     {
                         if (gameTimers.ContainsKey(friendlyName))
                         {
                             gameTimers[friendlyName].Enabled = false;
-                            games[games.IndexOf(currentlyPlaying, 0)].PlayTime = Convert.ToInt16(gameTimers[friendlyName].Tag);
+                            games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToInt16(gameTimers[friendlyName].Tag);
                             UpdateData();
-                            gameTimers[friendlyName].Dispose();
                             gameTimers.Remove(friendlyName);
                         }
                         launchGame.Text = "Play";
                         launchGame.Enabled = true;
-                        currentlyPlaying = null;
                     }
                     else
                     {
                         launchGame.Text = "Started";
                         launchGame.Enabled = false;
+
+                        if (gameTimers.ContainsKey(friendlyName))
+                        {
+                            var time = Convert.ToInt16(gameTimers[friendlyName].Tag) / 3600f + "";
+                            var playTimeCounter = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
+                            if (playTimeLabel.Text != playTimeCounter)
+                                playTimeLabel.Text = playTimeCounter;
+                        }
                     }
                 }
                 catch { }
@@ -71,7 +68,7 @@ namespace GameLauncher
             writer = new StreamWriter(stream) { AutoFlush = true };
 
             var data = await reader.ReadToEndAsync();
-            
+
             if (data != "[]" && data != string.Empty)
             {
                 games = JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name).ToList();
@@ -158,28 +155,19 @@ namespace GameLauncher
 
         private void launchGame_Click(object sender, EventArgs e)
         {
-            if (currentlyPlaying != null)
+            try
             {
-                MessageBox.Show("You can only play 1 game at a time!", "Game Launcher", MessageBoxButtons.OK);
+                Process.Start(selectedGame.Location, selectedGame.Arguments);
+                Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
+                gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1;
+                gameTimer.Enabled = true;
+                gameTimers.Add(selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", ""), gameTimer);
+                launchGame.Text = "Started";
+                launchGame.Enabled = false;
             }
-            else
+            catch (Exception er)
             {
-                try
-                {
-                    currentlyPlaying = selectedGame;
-                    Process.Start(selectedGame.Location, selectedGame.Arguments);
-                    Timer gameTimer = new Timer() { Interval = 1000 };
-                    gameTimer.Tag = selectedGame.PlayTime;
-                    gameTimer.Tick += (object s, EventArgs ee) => { (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1; };
-                    gameTimer.Enabled = true;
-                    gameTimers.Add(selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", ""), gameTimer);
-                    launchGame.Text = "Started";
-                    launchGame.Enabled = false;
-                }
-                catch (Exception er)
-                {
-                    MessageBox.Show(er.Message);
-                }
+                MessageBox.Show(er.Message);
             }
         }
 
