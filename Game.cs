@@ -6,9 +6,9 @@
         public string Location { get; set; }
         public string Arguments { get; set; }
         public string ArtworkPath { get; set; }
-        public int PlayTime { get; set; }
+        public double PlayTime { get; set; }
 
-        public Game(string name, string location, string arguments, string artworkPath, int playTime = 0)
+        public Game(string name, string location, string arguments, string artworkPath, double playTime = 0)
         {
             Name = name;
             Location = location;

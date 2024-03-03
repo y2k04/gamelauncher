@@ -36,7 +36,7 @@ namespace GameLauncher
                         if (gameTimers.ContainsKey(selectedGame))
                         {
                             gameTimers[selectedGame].Enabled = false;
-                            games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToInt16(gameTimers[selectedGame].Tag);
+                            games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToDouble(gameTimers[selectedGame].Tag);
                             UpdateData();
                             gameTimers.Remove(selectedGame);
                         }
@@ -50,14 +50,14 @@ namespace GameLauncher
 
                         if (gameTimers.ContainsKey(selectedGame))
                         {
-                            var time = Convert.ToInt16(gameTimers[selectedGame].Tag) / 3600f + "";
+                            var time = Convert.ToDouble(gameTimers[selectedGame].Tag) / 3600f + "";
                             var playTimeCounter = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
                             if (playTimeLabel.Text != playTimeCounter)
                                 playTimeLabel.Text = playTimeCounter;
                         } else
                         {
                             Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
-                            gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1;
+                            gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToDouble((s as Timer).Tag) + 1;
                             gameTimer.Enabled = true;
                             gameTimers.Add(selectedGame, gameTimer);
                         }
@@ -165,7 +165,7 @@ namespace GameLauncher
             {
                 Process.Start(selectedGame.Location, selectedGame.Arguments);
                 Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
-                gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToInt16((s as Timer).Tag) + 1;
+                gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToDouble((s as Timer).Tag) + 1;
                 gameTimer.Enabled = true;
                 gameTimers.Add(selectedGame, gameTimer);
                 launchGame.Text = "Started";
@@ -182,7 +182,7 @@ namespace GameLauncher
             foreach (var timer in gameTimers)
             {
                 timer.Value.Enabled = false;
-                games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToInt16(timer.Value.Tag);
+                games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
                 UpdateData();
                 gameTimers.Remove(timer.Key);
             }
