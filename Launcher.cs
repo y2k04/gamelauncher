@@ -2,69 +2,30 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Windows.Forms;
 
 namespace GameLauncher
 {
     public partial class Launcher : Form
     {
-        private List<Game> games = new List<Game>();
-        private Game selectedGame = new Game("", "", "", "");
-        private Timer processCheck = new Timer();
-        private Dictionary<Game, Timer> gameTimers = new Dictionary<Game, Timer>();
-        private string configJSON = $@"{Environment.CurrentDirectory}\config.json";
-        private FileStream stream;
-        private StreamReader reader;
-        private StreamWriter writer;
+        readonly string configJSON = $@"{Environment.CurrentDirectory}\config.json";
+        List<Game> games = [];
+        Game selectedGame = new();
+        readonly Timer processCheck = new() { Enabled = true };
+        readonly Dictionary<Game, Timer> gameTimers = [];
+
+        FileStream stream;
+        StreamReader reader;
+        StreamWriter writer;
 
         public Launcher()
         {
             InitializeComponent();
-
             SetupLauncher();
-            processCheck.Tick += (object sender, EventArgs e) =>
-            {
-                try
-                {
-                    var friendlyName = selectedGame.Location.Substring(selectedGame.Location.LastIndexOf(@"\") + 1).Replace(".exe", "");
-
-                    if (Process.GetProcessesByName(friendlyName).Length == 0)
-                    {
-                        if (gameTimers.ContainsKey(selectedGame))
-                        {
-                            gameTimers[selectedGame].Enabled = false;
-                            games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToDouble(gameTimers[selectedGame].Tag);
-                            UpdateData();
-                            gameTimers.Remove(selectedGame);
-                        }
-                        launchGame.Text = "Play";
-                        launchGame.Enabled = true;
-                    }
-                    else
-                    {
-                        launchGame.Text = "Started";
-                        launchGame.Enabled = false;
-
-                        if (gameTimers.ContainsKey(selectedGame))
-                        {
-                            var time = Convert.ToDouble(gameTimers[selectedGame].Tag) / 3600f + "";
-                            var playTimeCounter = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
-                            if (playTimeLabel.Text != playTimeCounter)
-                                playTimeLabel.Text = playTimeCounter;
-                        } else
-                        {
-                            Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
-                            gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToDouble((s as Timer).Tag) + 1;
-                            gameTimer.Enabled = true;
-                            gameTimers.Add(selectedGame, gameTimer);
-                        }
-                    }
-                }
-                catch { }
-            };
+            processCheck.Tick += ProcessCheck_Tick;
         }
 
         private async void SetupLauncher()
@@ -77,20 +38,20 @@ namespace GameLauncher
 
             if (data != "[]" && data != string.Empty)
             {
-                games = JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name).ToList();
-                foreach (var game in games)
-                {
-                    gameList.Nodes.Add(game.Name);
-                }
+                games = [.. JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name)];
+                games.ForEach(game => gameList.Nodes.Add(game.Name));
                 gameList.SelectedNode = gameList.Nodes[0];
                 editGameButton.Enabled =
                     deleteGameButton.Enabled = true;
+                emptyLibraryNote.Visible = false;
             }
             else
+            {
                 selectedGameName.Visible =
                     launchGame.Visible =
                     selectedGameArt.Visible =
                         playTimeContainer.Visible = false;
+            }
         }
 
         private void UpdateData()
@@ -99,13 +60,193 @@ namespace GameLauncher
             writer.Write(JsonConvert.SerializeObject(games));
         }
 
+        private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (games[e.Node.Index].Name != selectedGame.Name)
+            {
+                selectedGameName.Visible =
+                        launchGame.Visible =
+                        selectedGameArt.Visible =
+                        playTimeContainer.Visible = true;
+
+                selectedGame = games[e.Node.Index];
+                selectedGameName.Text = selectedGame.Name;
+                playTimeLabel.Text = Helpers.FormatPlayTime(selectedGame.PlayTime);
+
+                if (string.IsNullOrWhiteSpace(selectedGame.ArtworkPath))
+                    selectedGameArt.Image = Helpers.GetIcon(selectedGame.Location);
+                else
+                    selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
+
+                if (!File.Exists(selectedGame.Location))
+                    TryFixMissingGame(e.Node.Index);
+            }
+        }
+
+        private void TryFixMissingGame(int index)
+        {
+            var errormsg = MessageBox.Show($"The game you have selected could not be found.{Environment.NewLine}" +
+                $"Did you want us to check if it is on another drive,{Environment.NewLine}" +
+                $"manually select the new location, or ignore it?", "Game not found", MessageBoxButtons.AbortRetryIgnore);
+
+            switch (errormsg)
+            {
+                /*Scan*/ case DialogResult.Abort:
+                    TryScanMissingGame(index);
+                    break;
+                /*Browse*/ case DialogResult.Retry:
+                    TryBrowseMissingGame(index);
+                    break;
+                /*Ignore*/ default:
+                    launchGame.Text = "Not found";
+                    launchGame.Enabled = false;
+                    break;
+            }
+        }
+
+        private void TryScanMissingGame(int index)
+        {
+            ManagementObjectSearcher ms = new ManagementObjectSearcher("Select * from Win32_Volume");
+            var newPath = "";
+            foreach (ManagementObject mo in ms.Get())
+            {
+                var drive = (string)mo["DriveLetter"];
+                if (string.IsNullOrEmpty(drive))
+                    continue;
+                else
+                {
+                    var testPath = $"{drive.Trim(':')}{selectedGame.Location.Remove(0, 1)}";
+                    if (File.Exists(testPath))
+                    {
+                        newPath = testPath;
+                        break;
+                    }
+                }
+            }
+
+            if (newPath == "")
+            {
+                var errormsg = MessageBox.Show($"The game still can't be found.{Environment.NewLine}" +
+                    $"Did you want to select it yourself or ignore it?", "Scan failed", MessageBoxButtons.RetryCancel);
+                switch (errormsg)
+                {
+                    /*Browse*/
+                    case DialogResult.Retry:
+                        TryBrowseMissingGame(index);
+                        break;
+                    /*Ignore*/
+                    default:
+                        launchGame.Text = "Not found";
+                        launchGame.Enabled = false;
+                        break;
+                }
+            } else
+            {
+                var msg = MessageBox.Show($"The game was found on your {newPath.Substring(0, 1)} drive.{Environment.NewLine}" +
+                    $"Did you want to save these changes?", "Scan success", MessageBoxButtons.YesNo);
+
+                switch (msg)
+                {
+                    case DialogResult.Yes:
+                        selectedGame.Location = games[index].Location = newPath;
+                        UpdateData();
+                        launchGame.Text = "Play";
+                        launchGame.Enabled = true;
+                        break;
+                    default:
+                        launchGame.Text = "Not found";
+                        launchGame.Enabled = false;
+                        break;
+                }
+            }
+        }
+
+        private void TryBrowseMissingGame(int index)
+        {
+            var filename = Path.GetFileName(games[index].Location);
+            OpenFileDialog file = new OpenFileDialog()
+            {
+                CheckFileExists = true,
+                Filter = $"{filename}|{filename}|EXE files|*.exe",
+                Multiselect = false,
+                Title = $"Select {filename}"
+            };
+            if (file.ShowDialog() == DialogResult.OK)
+            {
+                var confirm = MessageBox.Show("Are you sure you want to save these changes?", "Manual search", MessageBoxButtons.YesNo);
+                if (confirm == DialogResult.Yes)
+                {
+                    selectedGame.Location = games[index].Location = file.FileName;
+                    UpdateData();
+                    launchGame.Text = "Play";
+                    launchGame.Enabled = true;
+                }
+            }
+        }
+
+        private void launchGame_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(selectedGame.Location, selectedGame.Arguments)
+                {
+                    WorkingDirectory = selectedGame.Location.Replace($" {Path.GetFileName(selectedGame.Location)}", "")
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void ProcessCheck_Tick(object _, EventArgs __)
+        {
+            try
+            {
+                if (!Process.GetProcessesByName(Path.GetFileName(selectedGame.Location).Replace(".exe", "")).Any())
+                {
+                    if (File.Exists(selectedGame.Location))
+                    {
+                        launchGame.Text = "Play";
+                        launchGame.Enabled = true;
+                    }
+
+                    if (gameTimers.ContainsKey(selectedGame))
+                    {
+                        gameTimers[selectedGame].Enabled = false;
+                        games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToDouble(gameTimers[selectedGame].Tag);
+                        UpdateData();
+                        gameTimers.Remove(selectedGame);
+                    }
+                }
+                else
+                {
+                    launchGame.Text = "Started";
+                    launchGame.Enabled = false;
+
+                    if (gameTimers.ContainsKey(selectedGame))
+                    {
+                        Helpers.LazyUpdateLabel(playTimeLabel, Helpers.FormatPlayTime(Convert.ToDouble(gameTimers[selectedGame].Tag)));
+                    }
+                    else
+                    {
+                        Timer gameTimer = new() { Interval = 1000, Tag = selectedGame.PlayTime };
+                        gameTimer.Tick += (object s, EventArgs e) => ((Timer)s).Tag = Convert.ToDouble(((Timer)s).Tag) + 1;
+                        gameTimer.Enabled = true;
+                        gameTimers.Add(selectedGame, gameTimer);
+                    }
+                }
+            }
+            catch {}
+        }
+
         private void addGameButton_Click(object sender, EventArgs e)
         {
-            ItemEditor editor = new ItemEditor();
+            ItemEditor editor = new();
             if (editor.ShowDialog() == DialogResult.OK)
             {
                 if (!File.Exists(editor.gameArtwork.Text) || editor.gameArtwork.Text == string.Empty)
-                    editor.gameArtwork.Text = "USE_APP_ICON";
+                    editor.gameArtwork.Text = "";
 
                 games.Add(new Game(
                     editor.gameName.Text,
@@ -122,81 +263,15 @@ namespace GameLauncher
                     launchGame.Visible =
                     selectedGameArt.Visible =
                         playTimeContainer.Visible = true;
+                emptyLibraryNote.Visible = false;
             }
-        }
-
-        private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            if (games[e.Node.Index].Location != selectedGame.Location)
-            {
-                if (!processCheck.Enabled)
-                    processCheck.Enabled = true;
-
-                selectedGameName.Visible =
-                        launchGame.Visible =
-                        selectedGameArt.Visible =
-                        playTimeContainer.Visible = true;
-
-                selectedGame = games[e.Node.Index];
-                selectedGameName.Text = selectedGame.Name;
-                var time = selectedGame.PlayTime / 3600f + "";
-                playTimeLabel.Text = time.Substring(0, time.LastIndexOf('.') + 2).Replace(".0", "") + (time.StartsWith("1.0") ? " hour" : " hours");
-
-                if (selectedGame.ArtworkPath == string.Empty || selectedGame.ArtworkPath == "USE_APP_ICON")
-                {
-                    games[e.Node.Index].ArtworkPath = "USE_APP_ICON";
-                    UpdateData();
-
-                    IntPtr hIcon = Shell32.GetJumboIcon(Shell32.GetIconIndex(selectedGame.Location));
-                    Icon icon = (Icon)Icon.FromHandle(hIcon).Clone();
-                    selectedGameArt.Image = icon.ToBitmap();
-                    Shell32.DestroyIcon(hIcon);
-                }
-                else
-                {
-                    selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
-                }
-            }
-        }
-
-        private void launchGame_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                Process.Start(selectedGame.Location, selectedGame.Arguments);
-                Timer gameTimer = new Timer() { Interval = 1000, Tag = selectedGame.PlayTime };
-                gameTimer.Tick += (object s, EventArgs ee) => (s as Timer).Tag = Convert.ToDouble((s as Timer).Tag) + 1;
-                gameTimer.Enabled = true;
-                gameTimers.Add(selectedGame, gameTimer);
-                launchGame.Text = "Started";
-                launchGame.Enabled = false;
-            }
-            catch (Exception er)
-            {
-                MessageBox.Show(er.Message);
-            }
-        }
-
-        private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            foreach (var timer in gameTimers)
-            {
-                timer.Value.Enabled = false;
-                games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
-                UpdateData();
-                gameTimers.Remove(timer.Key);
-            }
-            stream.Close();
         }
 
         private void editGameButton_Click(object sender, EventArgs e)
         {
-            ItemEditor editor = new ItemEditor(selectedGame);
+            ItemEditor editor = new(selectedGame);
             if (editor.ShowDialog() == DialogResult.OK)
             {
-                if (!File.Exists(editor.gameArtwork.Text) || editor.gameArtwork.Text == string.Empty)
-                    editor.gameArtwork.Text = "USE_APP_ICON";
-
                 games[gameList.SelectedNode.Index] = new Game(
                     editor.gameName.Text,
                     editor.gameLocation.Text,
@@ -211,12 +286,9 @@ namespace GameLauncher
                 selectedGameArt.ImageLocation = string.Empty;
                 selectedGameArt.Image = null;
 
-                if (selectedGame.ArtworkPath == "USE_APP_ICON")
+                if (selectedGame.ArtworkPath == "")
                 {
-                    IntPtr hIcon = Shell32.GetJumboIcon(Shell32.GetIconIndex(selectedGame.Location));
-                    Icon icon = (Icon)Icon.FromHandle(hIcon).Clone();
-                    selectedGameArt.Image = icon.ToBitmap();
-                    Shell32.DestroyIcon(hIcon);
+                    selectedGameArt.Image = Helpers.GetIcon(selectedGame.Location);
                 }
                 else
                 {
@@ -234,14 +306,29 @@ namespace GameLauncher
                 games.RemoveRange(gameList.SelectedNode.Index, 1);
                 gameList.Nodes.Remove(gameList.SelectedNode);
                 if (gameList.Nodes.Count != 0)
-                    gameList.SelectedNode = gameList.Nodes[0];
+                    gameList.SelectedNode = gameList.Nodes[gameList.Nodes.Count - 1];
                 else
+                {
                     selectedGameName.Visible =
                         launchGame.Visible =
                         selectedGameArt.Visible =
                         playTimeContainer.Visible = false;
+                    emptyLibraryNote.Visible = true;
+                }
                 UpdateData();
             }
+        }
+
+        private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            foreach (var timer in gameTimers)
+            {
+                timer.Value.Enabled = false;
+                games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
+                UpdateData();
+                gameTimers.Remove(timer.Key);
+            }
+            stream.Close();
         }
     }
 }

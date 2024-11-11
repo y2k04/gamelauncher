@@ -1,22 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
+using System.Threading;
 using System.Windows.Forms;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace GameLauncher
 {
-    internal static class Program
+    static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
+        static readonly Mutex _mutex = new Mutex(false, Path.GetFileName(Application.ExecutablePath));
+
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Launcher());
+            if (!_mutex.WaitOne(0, false))
+            {
+                HWND handle = PInvoke.FindWindow(null, "Game Launcher");
+                PInvoke.ShowWindow(handle, SHOW_WINDOW_CMD.SW_SHOW);
+                PInvoke.SetForegroundWindow(handle);
+                return;
+            }
+            else
+            {
+                MessageBoxManager.Abort = "Scan";
+                MessageBoxManager.Retry = 
+                    MessageBoxManager.Cancel = "Browse";
+                MessageBoxManager.Register();
+                Application.Run(new Launcher());
+            }
+            _mutex.ReleaseMutex();
         }
     }
 }

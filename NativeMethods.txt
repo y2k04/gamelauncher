@@ -1,0 +1,10 @@
+FindWindow
+ShowWindow
+SHOW_WINDOW_CMD
+SetForegroundWindow
+SHGetImageList
+SHGetIDListFromObject
+IMAGELISTDRAWPARAMS
+IMAGEINFO
+IMAGE_LIST_DRAW_STYLE
+DestroyIcon
