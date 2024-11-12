@@ -13,7 +13,7 @@ namespace GameLauncher
                 gameName.Text = game.Name;
                 gameLocation.Text = game.Location;
                 gameArguments.Text = game.Arguments;
-                gameArtwork.Text = game.ArtworkPath == "USE_APP_ICON" ? "" : game.ArtworkPath;
+                gameArtwork.Text = game.ArtworkPath;
             }
         }
 
