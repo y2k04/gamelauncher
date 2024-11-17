@@ -17,6 +17,7 @@ namespace GameLauncher
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
             if (!_mutex.WaitOne(0, false))
             {
                 HWND handle = PInvoke.FindWindow(null, "Game Launcher");
@@ -31,6 +32,7 @@ namespace GameLauncher
                     MessageBoxManager.Cancel = "Browse";
                 MessageBoxManager.Register();
                 Application.Run(new Launcher());
+                MessageBoxManager.Unregister();
             }
             _mutex.ReleaseMutex();
         }
