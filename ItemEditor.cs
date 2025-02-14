@@ -19,7 +19,7 @@ namespace GameLauncher
 
         private void selectLocation_Click(object sender, EventArgs e)
         {
-            OpenFileDialog file = new OpenFileDialog()
+            OpenFileDialog file = new()
             {
                 CheckFileExists = true,
                 Filter = "EXE files|*.exe",
@@ -27,9 +27,7 @@ namespace GameLauncher
                 Title = "Select game executable"
             };
             if (file.ShowDialog() == DialogResult.OK)
-            {
                 gameLocation.Text = file.FileName;
-            }
         }
 
         private void saveGame_Click(object sender, EventArgs e)
@@ -53,7 +51,7 @@ namespace GameLauncher
 
         private void selectArt_Click(object sender, EventArgs e)
         {
-            OpenFileDialog file = new OpenFileDialog()
+            OpenFileDialog file = new()
             {
                 CheckFileExists = true,
                 Filter = "Image files|*.png;*.jpg;*.jpeg;*.ico",

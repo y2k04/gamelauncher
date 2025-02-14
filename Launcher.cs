@@ -106,9 +106,9 @@ namespace GameLauncher
 
         private void TryScanMissingGame(int index)
         {
-            ManagementObjectSearcher ms = new ManagementObjectSearcher("Select * from Win32_Volume");
+            ManagementObjectSearcher ms = new("Select * from Win32_Volume");
             var newPath = "";
-            foreach (ManagementObject mo in ms.Get())
+            foreach (ManagementObject mo in ms.Get().Cast<ManagementObject>())
             {
                 var drive = (string)mo["DriveLetter"];
                 if (string.IsNullOrEmpty(drive))
@@ -164,7 +164,7 @@ namespace GameLauncher
         private void TryBrowseMissingGame(int index)
         {
             var filename = Path.GetFileName(games[index].Location);
-            OpenFileDialog file = new OpenFileDialog()
+            OpenFileDialog file = new()
             {
                 CheckFileExists = true,
                 Filter = $"{filename}|{filename}|EXE files|*.exe",
@@ -190,7 +190,7 @@ namespace GameLauncher
             {
                 Process.Start(new ProcessStartInfo(selectedGame.Location, selectedGame.Arguments)
                 {
-                    WorkingDirectory = selectedGame.Location.Replace($" {Path.GetFileName(selectedGame.Location)}", "")
+                    WorkingDirectory = Path.GetDirectoryName(selectedGame.Location)
                 });
             }
             catch (Exception ex)
@@ -203,7 +203,7 @@ namespace GameLauncher
         {
             try
             {
-                if (!Process.GetProcessesByName(Path.GetFileName(selectedGame.Location).Replace(".exe", "")).Any())
+                if (!Process.GetProcessesByName(Path.GetFileNameWithoutExtension(selectedGame.Location)).Any())
                 {
                     if (File.Exists(selectedGame.Location))
                     {
@@ -225,9 +225,7 @@ namespace GameLauncher
                     launchGame.Enabled = false;
 
                     if (gameTimers.ContainsKey(selectedGame))
-                    {
                         Helpers.LazyUpdateLabel(playTimeLabel, Helpers.FormatPlayTime(Convert.ToDouble(gameTimers[selectedGame].Tag)));
-                    }
                     else
                     {
                         Timer gameTimer = new() { Interval = 1000, Tag = selectedGame.PlayTime };
@@ -287,13 +285,9 @@ namespace GameLauncher
                 selectedGameArt.Image = null;
 
                 if (selectedGame.ArtworkPath == "")
-                {
                     selectedGameArt.Image = Helpers.GetIcon(selectedGame.Location);
-                }
                 else
-                {
                     selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
-                }
 
                 UpdateData();
             }
@@ -306,7 +300,7 @@ namespace GameLauncher
                 games.RemoveRange(gameList.SelectedNode.Index, 1);
                 gameList.Nodes.Remove(gameList.SelectedNode);
                 if (gameList.Nodes.Count != 0)
-                    gameList.SelectedNode = gameList.Nodes[gameList.Nodes.Count - 1];
+                    gameList.SelectedNode = gameList.TopNode;
                 else
                 {
                     selectedGameName.Visible =
@@ -321,13 +315,23 @@ namespace GameLauncher
 
         private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
         {
+            processCheck.Tick -= ProcessCheck_Tick;
+            processCheck.Enabled = false;
+
+            var keysToRemove = new List<Game>();
             foreach (var timer in gameTimers)
             {
                 timer.Value.Enabled = false;
                 games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
-                UpdateData();
-                gameTimers.Remove(timer.Key);
+                keysToRemove.Add(timer.Key);
             }
+
+            foreach (var key in keysToRemove)
+            {
+                gameTimers.Remove(key);
+            }
+
+            UpdateData();
             stream.Close();
         }
     }

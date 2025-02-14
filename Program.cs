@@ -10,7 +10,7 @@ namespace GameLauncher
 {
     static class Program
     {
-        static readonly Mutex _mutex = new Mutex(false, Path.GetFileName(Application.ExecutablePath));
+        static readonly Mutex _mutex = new(false, Path.GetFileName(Application.ExecutablePath));
 
         [STAThread]
         static void Main()

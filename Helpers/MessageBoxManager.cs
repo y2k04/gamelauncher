@@ -1,15 +1,9 @@
-﻿#pragma warning disable 0618
-
-using System.Runtime.InteropServices;
-using System.Security.Permissions;
+﻿using System.Runtime.InteropServices;
 using System.Text;
-
-[assembly: SecurityPermission(SecurityAction.RequestMinimum, UnmanagedCode = true)]
+using System.Threading;
 
 namespace System.Windows.Forms
-
 {
-
     public class MessageBoxManager
     {
         private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -66,7 +60,6 @@ namespace System.Windows.Forms
 
         [DllImport("user32.dll", EntryPoint = "SetWindowTextW", CharSet = CharSet.Unicode)]
         private static extern bool SetWindowText(IntPtr hWnd, string lpString);
-
 
         [StructLayout(LayoutKind.Sequential)]
         public struct CWPRETSTRUCT
@@ -132,7 +125,7 @@ namespace System.Windows.Forms
         {
             if (hHook != IntPtr.Zero)
                 throw new NotSupportedException("One hook per thread allowed.");
-            hHook = SetWindowsHookEx(WH_CALLWNDPROCRET, hookProc, IntPtr.Zero, AppDomain.GetCurrentThreadId());
+            hHook = SetWindowsHookEx(WH_CALLWNDPROCRET, hookProc, IntPtr.Zero, Thread.CurrentThread.ManagedThreadId);
         }
 
         /// <summary>
@@ -161,7 +154,7 @@ namespace System.Windows.Forms
             if (msg.message == WM_INITDIALOG)
             {
                 int nLength = GetWindowTextLength(msg.hwnd);
-                StringBuilder className = new StringBuilder(10);
+                StringBuilder className = new(10);
                 GetClassName(msg.hwnd, className, className.Capacity);
                 if (className.ToString() == "#32770")
                 {
@@ -175,13 +168,12 @@ namespace System.Windows.Forms
                     }
                 }
             }
-
             return CallNextHookEx(hook, nCode, wParam, lParam);
         }
 
         private static bool MessageBoxEnumProc(IntPtr hWnd, IntPtr lParam)
         {
-            StringBuilder className = new StringBuilder(10);
+            StringBuilder className = new(10);
             GetClassName(hWnd, className, className.Capacity);
             if (className.ToString() == "Button")
             {
@@ -213,10 +205,7 @@ namespace System.Windows.Forms
                 }
                 nButton++;
             }
-
             return true;
         }
-
-
     }
 }

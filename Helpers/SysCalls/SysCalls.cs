@@ -12,7 +12,7 @@ public static partial class SysCalls
 
     public static int GetIconIndex(string pszFile)
     {
-        SHFILEINFO sfi = new SHFILEINFO();
+        SHFILEINFO sfi = new();
         SHGetFileInfo(pszFile, 0, ref sfi, (uint)Marshal.SizeOf(sfi), (uint)(SHGFI.SysIconIndex | SHGFI.LargeIcon | SHGFI.UseFileAttributes));
         return sfi.iIcon;
     }
@@ -20,7 +20,7 @@ public static partial class SysCalls
     // 256*256
     public static IntPtr GetJumboIcon(int iImage)
     {
-        Guid guil = new Guid("192B9D83-50FC-457B-90A0-2B82A8B5DAE1");
+        Guid guil = new("192B9D83-50FC-457B-90A0-2B82A8B5DAE1");
 
         PInvoke.SHGetImageList(SHIL_JUMBO, in guil, out object spiml);
         IntPtr hIcon = IntPtr.Zero;
