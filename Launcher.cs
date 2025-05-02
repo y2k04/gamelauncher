@@ -35,18 +35,12 @@ namespace GameLauncher
             stream = File.Open(configJSON, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream) { AutoFlush = true };
-
             var data = await reader.ReadToEndAsync();
-
             if (data != "[]" && data != string.Empty)
             {
                 games = JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name).ToList();
-                if (showFavoritesOnly)
-                {
-                    games = games.Where(game => game.IsFavorite).ToList();
-                }
-                gameList.Nodes.Clear();
-                games.ForEach(game => gameList.Nodes.Add(game.Name));
+                showOnlyFavorites = false;
+                UpdateGameList();
                 gameList.SelectedNode = gameList.Nodes[0];
                 editGameButton.Enabled = deleteGameButton.Enabled = true;
                 emptyLibraryNote.Visible = false;
@@ -54,9 +48,9 @@ namespace GameLauncher
             else
             {
                 selectedGameName.Visible =
-                    launchGame.Visible =
-                    selectedGameArt.Visible =
-                    playTimeContainer.Visible = false;
+                launchGame.Visible =
+                selectedGameArt.Visible =
+                playTimeContainer.Visible = false;
             }
         }
 
@@ -371,24 +365,14 @@ namespace GameLauncher
             showOnlyFavorites = !showOnlyFavorites;
             UpdateGameList();
         }
-
         private void UpdateGameList()
         {
             gameList.Nodes.Clear();
-
             visibleGames = showOnlyFavorites
                 ? games.Where(g => g.IsFavorite).ToList()
                 : games;
-
             foreach (var game in visibleGames)
-            {
                 gameList.Nodes.Add(new TreeNode(game.Name));
-            }
-
-            if (visibleGames.Count > 0)
-            {
-                gameList.SelectedNode = gameList.Nodes[0];
-            }
         }
     }
 }
