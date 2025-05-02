@@ -57,7 +57,7 @@ namespace GameLauncher
         private void UpdateData()
         {
             stream.SetLength(0);
-            writer.Write(JsonConvert.SerializeObject(games));
+            writer.Write(JsonConvert.SerializeObject(games, Formatting.Indented));
         }
 
         private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
