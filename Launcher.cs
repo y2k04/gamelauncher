@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -21,9 +22,15 @@ namespace GameLauncher
         StreamReader reader;
         StreamWriter writer;
 
+        private readonly Font StarFont = new Font(DefaultFont.FontFamily, DefaultFont.Size + 4, FontStyle.Bold);
+        private readonly Brush StarBrush = Brushes.Gold;
+        private const string StarChar = "★";
+
         public Launcher()
         {
             InitializeComponent();
+            gameList.DrawMode = TreeViewDrawMode.OwnerDrawText;
+            gameList.DrawNode += GameList_DrawNode;
             SetupLauncher();
             processCheck.Tick += ProcessCheck_Tick;
         }
@@ -365,6 +372,33 @@ namespace GameLauncher
             showOnlyFavorites = !showOnlyFavorites;
             UpdateGameList();
         }
+
+        private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            var g = visibleGames[e.Node.Index];
+            var full = e.Node.Text;
+            var name = full.StartsWith(StarChar + " ")
+                       ? full.Substring(StarChar.Length + 1)
+                       : full;
+            var r = e.Bounds;
+
+            e.Graphics.FillRectangle(SystemBrushes.Window, r);
+
+            if (g.IsFavorite)
+            {
+                e.Graphics.DrawString(StarChar, StarFont, StarBrush, r.Location);
+                var offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
+                e.Graphics.DrawString(name, gameList.Font, Brushes.Black, r.Left + offset, r.Top);
+            }
+            else
+            {
+                e.Graphics.DrawString(name, gameList.Font, Brushes.Black, r.Location);
+            }
+
+            if ((e.State & TreeNodeStates.Selected) != 0)
+                e.Graphics.DrawRectangle(Pens.Blue, r);
+        }
+
         private void UpdateGameList()
         {
             gameList.Nodes.Clear();
@@ -372,7 +406,15 @@ namespace GameLauncher
                 ? games.Where(g => g.IsFavorite).ToList()
                 : games;
             foreach (var game in visibleGames)
-                gameList.Nodes.Add(new TreeNode(game.Name));
+            {
+                var node = new TreeNode($"{StarChar} {game.Name}");
+                if (game.IsFavorite)
+                {
+                    node.ForeColor = Color.Gold;           // optional, affects only non-owner-draw
+                    node.NodeFont = new Font(gameList.Font.FontFamily, gameList.Font.Size + 2, FontStyle.Bold);
+                }
+                gameList.Nodes.Add(node);
+            }
         }
     }
 }
