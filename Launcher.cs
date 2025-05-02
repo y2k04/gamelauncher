@@ -28,6 +28,8 @@ namespace GameLauncher
             processCheck.Tick += ProcessCheck_Tick;
         }
 
+        private List<Game> visibleGames = new List<Game>();
+
         private async void SetupLauncher()
         {
             stream = File.Open(configJSON, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
@@ -66,14 +68,17 @@ namespace GameLauncher
 
         private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (games[e.Node.Index].Name != selectedGame.Name)
+            if (visibleGames.Count == 0 || e.Node.Index >= visibleGames.Count)
+                return;
+
+            if (visibleGames[e.Node.Index].Name != selectedGame.Name)
             {
                 selectedGameName.Visible =
-                        launchGame.Visible =
-                        selectedGameArt.Visible =
-                        playTimeContainer.Visible = true;
+                    launchGame.Visible =
+                    selectedGameArt.Visible =
+                    playTimeContainer.Visible = true;
 
-                selectedGame = games[e.Node.Index];
+                selectedGame = visibleGames[e.Node.Index];
                 selectedGameName.Text = selectedGame.Name;
                 playTimeLabel.Text = Helpers.FormatPlayTime(selectedGame.PlayTime);
 
@@ -83,9 +88,10 @@ namespace GameLauncher
                     selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
 
                 if (!File.Exists(selectedGame.Location))
-                    TryFixMissingGame(e.Node.Index);
+                    TryFixMissingGame(games.IndexOf(selectedGame));
             }
         }
+
 
         private void TryFixMissingGame(int index)
         {
@@ -370,13 +376,18 @@ namespace GameLauncher
         {
             gameList.Nodes.Clear();
 
-            var filteredGames = showOnlyFavorites
+            visibleGames = showOnlyFavorites
                 ? games.Where(g => g.IsFavorite).ToList()
                 : games;
 
-            foreach (var game in filteredGames)
+            foreach (var game in visibleGames)
             {
                 gameList.Nodes.Add(new TreeNode(game.Name));
+            }
+
+            if (visibleGames.Count > 0)
+            {
+                gameList.SelectedNode = gameList.Nodes[0];
             }
         }
     }
