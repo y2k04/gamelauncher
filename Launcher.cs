@@ -38,11 +38,15 @@ namespace GameLauncher
 
             if (data != "[]" && data != string.Empty)
             {
-                games = [.. JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name)];
+                games = JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name).ToList();
+                if (showFavoritesOnly)
+                {
+                    games = games.Where(game => game.IsFavorite).ToList();
+                }
+                gameList.Nodes.Clear();
                 games.ForEach(game => gameList.Nodes.Add(game.Name));
                 gameList.SelectedNode = gameList.Nodes[0];
-                editGameButton.Enabled =
-                    deleteGameButton.Enabled = true;
+                editGameButton.Enabled = deleteGameButton.Enabled = true;
                 emptyLibraryNote.Visible = false;
             }
             else
@@ -50,7 +54,7 @@ namespace GameLauncher
                 selectedGameName.Visible =
                     launchGame.Visible =
                     selectedGameArt.Visible =
-                        playTimeContainer.Visible = false;
+                    playTimeContainer.Visible = false;
             }
         }
 
@@ -91,13 +95,16 @@ namespace GameLauncher
 
             switch (errormsg)
             {
-                /*Scan*/ case DialogResult.Abort:
+                /*Scan*/
+                case DialogResult.Abort:
                     TryScanMissingGame(index);
                     break;
-                /*Browse*/ case DialogResult.Retry:
+                /*Browse*/
+                case DialogResult.Retry:
                     TryBrowseMissingGame(index);
                     break;
-                /*Ignore*/ default:
+                /*Ignore*/
+                default:
                     launchGame.Text = "Not found";
                     launchGame.Enabled = false;
                     break;
@@ -140,7 +147,8 @@ namespace GameLauncher
                         launchGame.Enabled = false;
                         break;
                 }
-            } else
+            }
+            else
             {
                 var msg = MessageBox.Show($"The game was found on your {newPath.Substring(0, 1)} drive.{Environment.NewLine}" +
                     $"Did you want to save these changes?", "Scan success", MessageBoxButtons.YesNo);
@@ -235,7 +243,7 @@ namespace GameLauncher
                     }
                 }
             }
-            catch {}
+            catch { }
         }
 
         private void addGameButton_Click(object sender, EventArgs e)
@@ -250,8 +258,10 @@ namespace GameLauncher
                     editor.gameName.Text,
                     editor.gameLocation.Text,
                     editor.gameArguments.Text,
-                    editor.gameArtwork.Text
-                ));
+                    editor.gameArtwork.Text,
+                    0,
+                    editor.FavoriteChecked
+                                ));
 
                 UpdateData();
 
@@ -271,11 +281,12 @@ namespace GameLauncher
             if (editor.ShowDialog() == DialogResult.OK)
             {
                 games[gameList.SelectedNode.Index] = new Game(
-                    editor.gameName.Text,
-                    editor.gameLocation.Text,
-                    editor.gameArguments.Text,
-                    editor.gameArtwork.Text,
-                    selectedGame.PlayTime
+                editor.gameName.Text,
+                editor.gameLocation.Text,
+                editor.gameArguments.Text,
+                editor.gameArtwork.Text,
+                selectedGame.PlayTime,
+                editor.FavoriteChecked
                 );
 
                 gameList.SelectedNode.Text = editor.gameName.Text;
@@ -333,6 +344,40 @@ namespace GameLauncher
 
             UpdateData();
             stream.Close();
+        }
+
+        private bool showFavoritesOnly = false;
+
+        private void emptyLibraryNote_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Launcher_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private bool showOnlyFavorites = false;
+
+        private void favoritestoggle_Click(object sender, EventArgs e)
+        {
+            showOnlyFavorites = !showOnlyFavorites;
+            UpdateGameList();
+        }
+
+        private void UpdateGameList()
+        {
+            gameList.Nodes.Clear();
+
+            var filteredGames = showOnlyFavorites
+                ? games.Where(g => g.IsFavorite).ToList()
+                : games;
+
+            foreach (var game in filteredGames)
+            {
+                gameList.Nodes.Add(new TreeNode(game.Name));
+            }
         }
     }
 }

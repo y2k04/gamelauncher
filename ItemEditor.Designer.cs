@@ -41,6 +41,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.gameArtwork = new System.Windows.Forms.TextBox();
             this.selectArt = new System.Windows.Forms.Button();
+            this.label5 = new System.Windows.Forms.Label();
+            this.favoriteCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // label1
@@ -103,7 +105,7 @@
             // 
             // saveGame
             // 
-            this.saveGame.Location = new System.Drawing.Point(88, 113);
+            this.saveGame.Location = new System.Drawing.Point(75, 164);
             this.saveGame.Name = "saveGame";
             this.saveGame.Size = new System.Drawing.Size(61, 24);
             this.saveGame.TabIndex = 7;
@@ -113,7 +115,7 @@
             // 
             // cancelButton
             // 
-            this.cancelButton.Location = new System.Drawing.Point(155, 114);
+            this.cancelButton.Location = new System.Drawing.Point(142, 164);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(61, 23);
             this.cancelButton.TabIndex = 8;
@@ -147,12 +149,34 @@
             this.selectArt.UseVisualStyleBackColor = true;
             this.selectArt.Click += new System.EventHandler(this.selectArt_Click);
             // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(12, 126);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(45, 13);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "Favorite";
+            this.label5.Click += new System.EventHandler(this.label5_Click);
+            // 
+            // favoriteCheckBox
+            // 
+            this.favoriteCheckBox.AutoSize = true;
+            this.favoriteCheckBox.Location = new System.Drawing.Point(75, 126);
+            this.favoriteCheckBox.Name = "favoriteCheckBox";
+            this.favoriteCheckBox.Size = new System.Drawing.Size(15, 14);
+            this.favoriteCheckBox.TabIndex = 13;
+            this.favoriteCheckBox.UseVisualStyleBackColor = true;
+            this.favoriteCheckBox.CheckedChanged += new System.EventHandler(this.favoriteCheckBox_CheckedChanged);
+            // 
             // ItemEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(296, 144);
+            this.ClientSize = new System.Drawing.Size(296, 200);
             this.ControlBox = false;
+            this.Controls.Add(this.favoriteCheckBox);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.selectArt);
             this.Controls.Add(this.gameArtwork);
             this.Controls.Add(this.label4);
@@ -189,5 +213,7 @@
         private System.Windows.Forms.Label label4;
         public System.Windows.Forms.TextBox gameArtwork;
         private System.Windows.Forms.Button selectArt;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.CheckBox favoriteCheckBox;
     }
 }

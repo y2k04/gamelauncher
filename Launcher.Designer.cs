@@ -37,6 +37,7 @@
             this.editGameButton = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteGameButton = new System.Windows.Forms.ToolStripMenuItem();
             this.emptyLibraryNote = new System.Windows.Forms.Label();
+            this.favoritestoggle = new System.Windows.Forms.Button();
             this.playTimeContainer = new System.Windows.Forms.GroupBox();
             this.playTimeLabel = new System.Windows.Forms.Label();
             this.launchGame = new System.Windows.Forms.Button();
@@ -64,6 +65,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.favoritestoggle);
             this.splitContainer1.Panel2.Controls.Add(this.playTimeContainer);
             this.splitContainer1.Panel2.Controls.Add(this.launchGame);
             this.splitContainer1.Panel2.Controls.Add(this.selectedGameName);
@@ -130,6 +132,17 @@
             this.emptyLibraryNote.TabIndex = 1;
             this.emptyLibraryNote.Text = "Right-click to access menu";
             this.emptyLibraryNote.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.emptyLibraryNote.Click += new System.EventHandler(this.emptyLibraryNote_Click);
+            // 
+            // favoritestoggle
+            // 
+            this.favoritestoggle.Location = new System.Drawing.Point(430, 424);
+            this.favoritestoggle.Name = "favoritestoggle";
+            this.favoritestoggle.Size = new System.Drawing.Size(97, 23);
+            this.favoritestoggle.TabIndex = 4;
+            this.favoritestoggle.Text = "Toggle Favorites";
+            this.favoritestoggle.UseVisualStyleBackColor = true;
+            this.favoritestoggle.Click += new System.EventHandler(this.favoritestoggle_Click);
             // 
             // playTimeContainer
             // 
@@ -205,6 +218,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Game Launcher";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Launcher_FormClosing);
+            this.Load += new System.EventHandler(this.Launcher_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.Panel2.PerformLayout();
@@ -233,6 +247,7 @@
         private System.Windows.Forms.GroupBox playTimeContainer;
         private System.Windows.Forms.Label playTimeLabel;
         private System.Windows.Forms.Label emptyLibraryNote;
+        private System.Windows.Forms.Button favoritestoggle;
     }
 }
 
