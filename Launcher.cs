@@ -22,7 +22,7 @@ namespace GameLauncher
         StreamReader reader;
         StreamWriter writer;
 
-        private readonly Font StarFont = new Font(DefaultFont.FontFamily, DefaultFont.Size + 4, FontStyle.Bold);
+        private readonly Font StarFont = new Font(DefaultFont.FontFamily, DefaultFont.Size + 2, FontStyle.Bold);
         private readonly Brush StarBrush = Brushes.Gold;
         private const string StarChar = "★";
 
@@ -375,28 +375,35 @@ namespace GameLauncher
 
         private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
         {
+            if (e.Node.Index >= visibleGames.Count)
+                return;
+
             var g = visibleGames[e.Node.Index];
             var full = e.Node.Text;
             var name = full.StartsWith(StarChar + " ")
                        ? full.Substring(StarChar.Length + 1)
                        : full;
-            var r = e.Bounds;
 
-            e.Graphics.FillRectangle(SystemBrushes.Window, r);
+            var bounds = new Rectangle(e.Bounds.X, e.Bounds.Y, gameList.Width, e.Bounds.Height);
+
+            bool isSelected = (e.State & TreeNodeStates.Selected) != 0;
+
+            e.Graphics.FillRectangle(isSelected ? SystemBrushes.Highlight : SystemBrushes.Window, bounds);
+
+            Brush textBrush = isSelected ? SystemBrushes.HighlightText : SystemBrushes.ControlText;
 
             if (g.IsFavorite)
             {
-                e.Graphics.DrawString(StarChar, StarFont, StarBrush, r.Location);
-                var offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
-                e.Graphics.DrawString(name, gameList.Font, Brushes.Black, r.Left + offset, r.Top);
+                e.Graphics.DrawString(StarChar, StarFont, StarBrush, bounds.Location);
+                float offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Left + offset, bounds.Top);
             }
             else
             {
-                e.Graphics.DrawString(name, gameList.Font, Brushes.Black, r.Location);
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
             }
 
-            if ((e.State & TreeNodeStates.Selected) != 0)
-                e.Graphics.DrawRectangle(Pens.Blue, r);
+            e.DrawDefault = false;
         }
 
         private void UpdateGameList()
