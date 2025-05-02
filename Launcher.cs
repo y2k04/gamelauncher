@@ -375,6 +375,10 @@ namespace GameLauncher
         {
             showOnlyFavorites = !showOnlyFavorites;
             UpdateGameList();
+
+            favoritestoggle.FlatStyle = FlatStyle.Standard;
+            favoritestoggle.BackColor = showOnlyFavorites ? Color.IndianRed : SystemColors.Control;
+            favoritestoggle.ForeColor = showOnlyFavorites ? Color.LightYellow : SystemColors.ControlText;
         }
 
         private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
