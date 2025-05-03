@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GameLauncher.Util;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,7 +26,9 @@ namespace GameLauncher
         {
             InitializeComponent();
             SetupLauncher();
+            LoggingUtil.Info("Binding event: \"ProcessCheck_Tick\" to \"processCheck.Tick\"");
             processCheck.Tick += ProcessCheck_Tick;
+            LoggingUtil.Info("Launcher window has been initialized!");
         }
 
         private async void SetupLauncher()
@@ -85,6 +88,7 @@ namespace GameLauncher
 
         private void TryFixMissingGame(int index)
         {
+            LoggingUtil.Error("Selected game could not be found!");
             var errormsg = MessageBox.Show($"The game you have selected could not be found.{Environment.NewLine}" +
                 $"Did you want us to check if it is on another drive,{Environment.NewLine}" +
                 $"manually select the new location, or ignore it?", "Game not found", MessageBoxButtons.AbortRetryIgnore);
@@ -126,6 +130,7 @@ namespace GameLauncher
 
             if (newPath == "")
             {
+                LoggingUtil.Error("Selected game could not be found!");
                 var errormsg = MessageBox.Show($"The game still can't be found.{Environment.NewLine}" +
                     $"Did you want to select it yourself or ignore it?", "Scan failed", MessageBoxButtons.RetryCancel);
                 switch (errormsg)
@@ -188,6 +193,7 @@ namespace GameLauncher
         {
             try
             {
+                LoggingUtil.Info($"Launching game \"{selectedGame.Name}\" with path \"{selectedGame.Location}\"...");
                 Process.Start(new ProcessStartInfo(selectedGame.Location, selectedGame.Arguments)
                 {
                     WorkingDirectory = Path.GetDirectoryName(selectedGame.Location)
@@ -195,7 +201,8 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                LoggingUtil.Error($"Error launching game \"{selectedGame.Name}\": \"{ex.Message}\"");
+                MessageBox.Show(ex.Message, "Error launching game", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -262,6 +269,8 @@ namespace GameLauncher
                     selectedGameArt.Visible =
                         playTimeContainer.Visible = true;
                 emptyLibraryNote.Visible = false;
+
+                LoggingUtil.Info($"Added game to the list: {editor.gameName.Text}");
             }
         }
 
@@ -310,11 +319,13 @@ namespace GameLauncher
                     emptyLibraryNote.Visible = true;
                 }
                 UpdateData();
+                LoggingUtil.Info($"{selectedGame.Name} has been deleted!");
             }
         }
 
         private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
         {
+            LoggingUtil.Info("Unregistering event: \"processCheck.Tick\"");
             processCheck.Tick -= ProcessCheck_Tick;
             processCheck.Enabled = false;
 
@@ -333,6 +344,8 @@ namespace GameLauncher
 
             UpdateData();
             stream.Close();
+
+            LoggingUtil.Info("Closing main launcher window...");
         }
     }
 }

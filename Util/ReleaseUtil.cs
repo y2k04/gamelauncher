@@ -3,29 +3,36 @@ using Octokit;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Net;
+using System.ComponentModel;
 
 namespace GameLauncher.Util;
 
 /// <summary>
 /// Manages the you already know.
 /// </summary>
-public class ReleaseUtil
+public static class ReleaseUtil
 {
-    private string _curVersion = "v" + Assembly.GetEntryAssembly().GetName().Version.ToString();
-    private string _zipFile = "GameLauncher-{0}.zip";
+    private static string _curVersion = "v" + Assembly.GetEntryAssembly().GetName().Version.ToString();
+    private static string _zipFile = "GameLauncher-{0}.zip";
+    public static string ZipFileName { get => _zipFile; }
     private const string RepoOrg = "y2k04";
     private const string RepoUri = "gamelauncher";
 
-    public DownloadDataCompletedEventHandler DownloadDataCompleted { get; set; }
-    public DownloadProgressChangedEventHandler DownloadProgressChanged { get; set; }
+    public static DownloadDataCompletedEventHandler DownloadDataCompleted { get; set; }
+    public static AsyncCompletedEventHandler DownloadFileCompleted { get; set; }
+    public static DownloadProgressChangedEventHandler DownloadProgressChanged { get; set; }
 
     /// <summary>
     /// Gets all of the information about the releases and compares them to the current version of the executable.
     /// </summary>
     /// <returns>Returns true when the latest version is higher than the current.</returns>
-    public async Task<bool> CheckForUpdates()
+    public static async Task<bool> CheckForUpdates()
     {
-        if (_curVersion == null) return false;
+        if (_curVersion == null)
+        {
+            LoggingUtil.Warn("_curVersion is null!"); 
+            return false;
+        }
 
         try
         {
@@ -36,24 +43,30 @@ public class ReleaseUtil
             if (latestRel != null)
             {
                 // Parse versions for comparison  
-                var currentVersion = new Version(_curVersion);
-                var latestVersion = new Version(latestRel.TagName);
+                var currentVersion = new Version(_curVersion.TrimStart('v').TrimEnd());
+                var latestVersion = new Version(latestRel.TagName.TrimStart('v').TrimEnd());
+
+                LoggingUtil.Info($"Comparing client version {currentVersion.ToString()} to latest version from remote {latestVersion.ToString()}");
 
                 return currentVersion < latestVersion;
             }
+
+            LoggingUtil.Warn("latestRel is null!");
         }
-        catch (Exception)
+        catch (Exception e)
         {
             // eh it will return false anyways.
+            LoggingUtil.Warn($"Failed to check for updates: {e.Message}\nStack Trace:\n{e.StackTrace}");
         }
 
         return false;
     }
 
     /// <summary>
-    /// 
+    /// Downloads the latest release to the specified file path.
     /// </summary>
-    public async Task DownloadLatestRelease(string filePath)
+    /// <param name="filePath">Output path</param>
+    public static async Task DownloadLatestRelease(string filePath)
     {
         try
         {
@@ -69,17 +82,22 @@ public class ReleaseUtil
                     // if the exact archive file is found, download it.
                     if (asset.Name == string.Format(_zipFile, latestRel.TagName))
                     {
+                        LoggingUtil.Info("Found the asset! Downloading...");
                         using var wc = new WebClient();
                         if (DownloadDataCompleted != null) wc.DownloadDataCompleted += DownloadDataCompleted;
+                        if (DownloadFileCompleted != null) wc.DownloadFileCompleted += DownloadFileCompleted;
                         if (DownloadProgressChanged != null) wc.DownloadProgressChanged += DownloadProgressChanged;
                         wc.DownloadFileAsync(new Uri(asset.BrowserDownloadUrl), filePath);
-                        break;
+                        return;
                     }
                 }
+
+                LoggingUtil.Warn($"Latest release doesn't have the expected asset! (\"{string.Format(_zipFile, latestRel.TagName)}\")");
             }
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            LoggingUtil.Error("Error downloading latest asset: " + e.Message);
         }
     }
 }

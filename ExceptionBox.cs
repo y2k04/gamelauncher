@@ -1,0 +1,122 @@
+﻿using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using GameLauncher.Util;
+
+namespace GameLauncher
+{
+    public partial class ExceptionBox : Form
+    {
+        private Exception _ex;
+
+        private Size _fullSize = new(769, 300);
+        private Size _normalSize = new(769, 145);
+        private bool _moreDetails = false;
+
+        public ExceptionBox(Exception ex)
+        {
+            InitializeComponent();
+            _ex = ex;
+
+            this.btnBreakInDebugger.Visible = Debugger.IsAttached;
+
+            if (_moreDetails)
+            {
+                this.Size = _fullSize;
+                this.stackTraceContainer.Visible = true;
+
+                this.btnMoreDetails.Text = "<< Collapse";
+            }
+            else
+            {
+                this.Size = _normalSize;
+                this.stackTraceContainer.Visible = false;
+                this.btnMoreDetails.Text = ">> More details";
+            }
+        }
+
+        private void AnimateSize(Size property, Size newProperty)
+        {
+            AnimateSize(property, newProperty.Width, newProperty.Height);
+        }
+
+        private void AnimateSize(Size property, int width, int height)
+        {
+            property = new Size(property.Width, property.Height);
+
+            Task.Run(async () =>
+            {
+                while (property.Width != width || property.Height != height)
+                {
+                    int widthStep = Math.Sign(width - property.Width);
+                    int heightStep = Math.Sign(height - property.Height);
+
+                    property.Width += widthStep;
+                    property.Height += heightStep;
+
+                    this.Invoke(() => this.Size = property);
+                    this.Invoke(() => this.Refresh());
+                    await Task.Delay(TimeSpan.FromMilliseconds(0.1));
+                }
+            });
+        }
+
+        private void btnQuit_Click(object sender, EventArgs e)
+        {
+            this.Close();
+
+            Application.Exit();
+        }
+
+        private void ExceptionBox_Load(object sender, EventArgs e)
+        {
+            this.stackTraceText.Text = _ex.ToString();
+        }
+
+        private void githubIssuesLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo()
+            {
+                FileName = "https://github.com/y2k04/gamelauncher/issues",
+                UseShellExecute = true
+            });
+        }
+
+        private void btnMoreDetails_Click(object sender, EventArgs e)
+        {
+            if (!_moreDetails)
+            {
+                this.stackTraceContainer.Visible = true;
+                AnimateSize(this.Size, _fullSize);
+                this.btnMoreDetails.Text = "<< Collapse";
+
+                _moreDetails = true;
+            }
+            else
+            {
+                AnimateSize(this.Size, _normalSize);
+                this.btnMoreDetails.Text = ">> More details";
+                this.stackTraceContainer.Visible = false;
+
+                _moreDetails = false;
+            }
+        }
+
+        private void ExceptionBox_SizeChanged(object sender, EventArgs e)
+        {
+            this.CenterToScreen();
+        }
+
+        [DebuggerHidden]
+        private void btnBreakInDebugger_Click(object sender, EventArgs e)
+        {
+            if (Debugger.IsAttached)
+            {
+                LoggingUtil.Debug("Sending breakpoint to debugger.");
+                Debugger.Break();
+            }
+        }
+    }
+}

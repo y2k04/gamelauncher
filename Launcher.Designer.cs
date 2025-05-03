@@ -133,12 +133,12 @@
             // 
             // playTimeContainer
             // 
+            this.playTimeContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.playTimeContainer.AutoSize = true;
             this.playTimeContainer.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.playTimeContainer.Controls.Add(this.playTimeLabel);
-            this.playTimeContainer.Dock = System.Windows.Forms.DockStyle.Right;
             this.playTimeContainer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeContainer.Location = new System.Drawing.Point(430, 256);
+            this.playTimeContainer.Location = new System.Drawing.Point(418, 262);
             this.playTimeContainer.MaximumSize = new System.Drawing.Size(0, 43);
             this.playTimeContainer.MinimumSize = new System.Drawing.Size(100, 43);
             this.playTimeContainer.Name = "playTimeContainer";
@@ -152,7 +152,7 @@
             // 
             this.playTimeLabel.AutoSize = true;
             this.playTimeLabel.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeLabel.Location = new System.Drawing.Point(3, 23);
+            this.playTimeLabel.Location = new System.Drawing.Point(3, 17);
             this.playTimeLabel.Name = "playTimeLabel";
             this.playTimeLabel.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
             this.playTimeLabel.Size = new System.Drawing.Size(55, 17);
@@ -204,6 +204,7 @@
             this.Name = "Launcher";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Game Launcher";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Launcher_FormClosing);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
