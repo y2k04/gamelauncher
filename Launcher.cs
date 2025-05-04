@@ -14,17 +14,20 @@ namespace GameLauncher
     {
         readonly string configJSON = $@"{Environment.CurrentDirectory}\config.json";
         List<Game> games = [];
+        List<Game> visibleGames = [];
         Game selectedGame = new();
         readonly Timer processCheck = new() { Enabled = true };
         readonly Dictionary<Game, Timer> gameTimers = [];
+
+        bool showOnlyFavorites = false;
 
         FileStream stream;
         StreamReader reader;
         StreamWriter writer;
 
-        private readonly Font StarFont = new Font(DefaultFont.FontFamily, DefaultFont.Size + 2, FontStyle.Bold);
-        private readonly Brush StarBrush = Brushes.Gold;
-        private const string StarChar = "★";
+        readonly Font StarFont = new Font(DefaultFont.FontFamily, DefaultFont.Size + 2, FontStyle.Bold);
+        readonly Brush StarBrush = Brushes.Gold;
+        const string StarChar = "★";
 
         public Launcher()
         {
@@ -35,17 +38,16 @@ namespace GameLauncher
             processCheck.Tick += ProcessCheck_Tick;
         }
 
-        private List<Game> visibleGames = new List<Game>();
-
         private async void SetupLauncher()
         {
             stream = File.Open(configJSON, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream) { AutoFlush = true };
+
             var data = await reader.ReadToEndAsync();
             if (data != "[]" && data != string.Empty)
             {
-                games = JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name).ToList();
+                games = [.. JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name)];
                 showOnlyFavorites = false;
                 UpdateGameList();
                 gameList.SelectedNode = gameList.Nodes[0];
@@ -55,20 +57,15 @@ namespace GameLauncher
             else
             {
                 selectedGameName.Visible =
-                launchGame.Visible =
-                selectedGameArt.Visible =
-                playTimeContainer.Visible = false;
+                    launchGame.Visible =
+                    selectedGameArt.Visible =
+                    playTimeContainer.Visible = false;
             }
         }
         private void UpdateData()
         {
             stream.SetLength(0);
-            writer.Write(
-                JsonConvert.SerializeObject(
-                    games,
-                    Formatting.Indented
-                )
-            );
+            writer.Write(JsonConvert.SerializeObject(games, Formatting.Indented));
         }
 
         private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
@@ -96,7 +93,6 @@ namespace GameLauncher
                     TryFixMissingGame(games.IndexOf(selectedGame));
             }
         }
-
 
         private void TryFixMissingGame(int index)
         {
@@ -203,6 +199,23 @@ namespace GameLauncher
             }
         }
 
+        private void UpdateGameList()
+        {
+            gameList.Nodes.Clear();
+            visibleGames = showOnlyFavorites ? [.. games.Where(g => g.IsFavorite)] : games;
+            foreach (var game in visibleGames)
+            {
+                var node = new TreeNode($"{StarChar} {game.Name}");
+                node.Tag = game;
+                if (game.IsFavorite)
+                {
+                    node.ForeColor = Color.Gold; // optional, affects only non-owner-draw
+                    node.NodeFont = new Font(gameList.Font.FontFamily, gameList.Font.Size + 2, FontStyle.Bold);
+                }
+                gameList.Nodes.Add(node);
+            }
+        }
+
         private void launchGame_Click(object sender, EventArgs e)
         {
             try
@@ -265,23 +278,21 @@ namespace GameLauncher
                 if (!File.Exists(editor.gameArtwork.Text) || editor.gameArtwork.Text == string.Empty)
                     editor.gameArtwork.Text = "";
 
-                games.Add(new Game(
+                var game = new Game(
                     editor.gameName.Text,
                     editor.gameLocation.Text,
                     editor.gameArguments.Text,
                     editor.gameArtwork.Text,
                     0,
                     editor.FavoriteChecked
-                                ));
+                );
+                games.Add(game);
 
                 UpdateData();
+                UpdateGameList();
 
-                gameList.SelectedNode = gameList.Nodes.Add(editor.gameName.Text);
+                gameList.SelectedNode = gameList.TopNode;
 
-                selectedGameName.Visible =
-                    launchGame.Visible =
-                    selectedGameArt.Visible =
-                        playTimeContainer.Visible = true;
                 emptyLibraryNote.Visible = false;
             }
         }
@@ -292,12 +303,12 @@ namespace GameLauncher
             if (editor.ShowDialog() == DialogResult.OK)
             {
                 games[gameList.SelectedNode.Index] = new Game(
-                editor.gameName.Text,
-                editor.gameLocation.Text,
-                editor.gameArguments.Text,
-                editor.gameArtwork.Text,
-                selectedGame.PlayTime,
-                editor.FavoriteChecked
+                    editor.gameName.Text,
+                    editor.gameLocation.Text,
+                    editor.gameArguments.Text,
+                    editor.gameArtwork.Text,
+                    selectedGame.PlayTime,
+                    editor.FavoriteChecked
                 );
 
                 gameList.SelectedNode.Text = editor.gameName.Text;
@@ -328,11 +339,57 @@ namespace GameLauncher
                     selectedGameName.Visible =
                         launchGame.Visible =
                         selectedGameArt.Visible =
-                        playTimeContainer.Visible = false;
+                        playTimeContainer.Visible =
+                        editGameButton.Enabled =
+                        deleteGameButton.Enabled = false;
                     emptyLibraryNote.Visible = true;
                 }
                 UpdateData();
             }
+        }
+
+        private void favoritesToggle_Click(object sender, EventArgs e)
+        {
+            showOnlyFavorites = !showOnlyFavorites;
+            UpdateGameList();
+            gameList.SelectedNode = null;
+            selectedGame = new Game();
+
+            selectedGameName.Visible =
+                launchGame.Visible =
+                selectedGameArt.Visible =
+                playTimeContainer.Visible = false;
+
+            favoritestoggle.FlatStyle = FlatStyle.Standard;
+            favoritestoggle.BackColor = showOnlyFavorites ? Color.IndianRed : SystemColors.Control;
+            favoritestoggle.ForeColor = showOnlyFavorites ? Color.LightYellow : SystemColors.ControlText;
+        }
+
+        private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            if (e.Node.Index >= visibleGames.Count)
+                return;
+
+            var g = visibleGames[e.Node.Index];
+            var full = e.Node.Text;
+
+            var name = full.StartsWith(StarChar + " ") ? full.Substring(StarChar.Length + 1) : full;
+            var bounds = new Rectangle(e.Bounds.X, e.Bounds.Y, gameList.Width, e.Bounds.Height);
+            bool isSelected = (e.State & TreeNodeStates.Selected) != 0;
+
+            Brush textBrush = isSelected ? SystemBrushes.HighlightText : SystemBrushes.ControlText;
+            e.Graphics.FillRectangle(isSelected ? SystemBrushes.Highlight : SystemBrushes.Window, bounds);
+
+            if (g.IsFavorite)
+            {
+                float offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
+                e.Graphics.DrawString(StarChar, StarFont, StarBrush, bounds.Location);
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Left + offset, bounds.Top);
+            }
+            else
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
+
+            e.DrawDefault = false;
         }
 
         private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
@@ -355,81 +412,6 @@ namespace GameLauncher
 
             UpdateData();
             stream.Close();
-        }
-
-        private bool showFavoritesOnly = false;
-
-        private void emptyLibraryNote_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Launcher_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private bool showOnlyFavorites = false;
-
-        private void favoritestoggle_Click(object sender, EventArgs e)
-        {
-            showOnlyFavorites = !showOnlyFavorites;
-            UpdateGameList();
-
-            favoritestoggle.FlatStyle = FlatStyle.Standard;
-            favoritestoggle.BackColor = showOnlyFavorites ? Color.IndianRed : SystemColors.Control;
-            favoritestoggle.ForeColor = showOnlyFavorites ? Color.LightYellow : SystemColors.ControlText;
-        }
-
-        private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
-        {
-            if (e.Node.Index >= visibleGames.Count)
-                return;
-
-            var g = visibleGames[e.Node.Index];
-            var full = e.Node.Text;
-            var name = full.StartsWith(StarChar + " ")
-                       ? full.Substring(StarChar.Length + 1)
-                       : full;
-
-            var bounds = new Rectangle(e.Bounds.X, e.Bounds.Y, gameList.Width, e.Bounds.Height);
-
-            bool isSelected = (e.State & TreeNodeStates.Selected) != 0;
-
-            e.Graphics.FillRectangle(isSelected ? SystemBrushes.Highlight : SystemBrushes.Window, bounds);
-
-            Brush textBrush = isSelected ? SystemBrushes.HighlightText : SystemBrushes.ControlText;
-
-            if (g.IsFavorite)
-            {
-                e.Graphics.DrawString(StarChar, StarFont, StarBrush, bounds.Location);
-                float offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
-                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Left + offset, bounds.Top);
-            }
-            else
-            {
-                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
-            }
-
-            e.DrawDefault = false;
-        }
-
-        private void UpdateGameList()
-        {
-            gameList.Nodes.Clear();
-            visibleGames = showOnlyFavorites
-                ? games.Where(g => g.IsFavorite).ToList()
-                : games;
-            foreach (var game in visibleGames)
-            {
-                var node = new TreeNode($"{StarChar} {game.Name}");
-                if (game.IsFavorite)
-                {
-                    node.ForeColor = Color.Gold;           // optional, affects only non-owner-draw
-                    node.NodeFont = new Font(gameList.Font.FontFamily, gameList.Font.Size + 2, FontStyle.Bold);
-                }
-                gameList.Nodes.Add(node);
-            }
         }
     }
 }

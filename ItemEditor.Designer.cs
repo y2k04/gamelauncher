@@ -48,40 +48,45 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 9);
+            this.label1.Location = new System.Drawing.Point(16, 11);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(35, 13);
+            this.label1.Size = new System.Drawing.Size(44, 16);
             this.label1.TabIndex = 0;
             this.label1.Text = "Name";
             // 
             // gameName
             // 
-            this.gameName.Location = new System.Drawing.Point(75, 6);
+            this.gameName.Location = new System.Drawing.Point(100, 7);
+            this.gameName.Margin = new System.Windows.Forms.Padding(4);
             this.gameName.Name = "gameName";
-            this.gameName.Size = new System.Drawing.Size(207, 20);
+            this.gameName.Size = new System.Drawing.Size(275, 22);
             this.gameName.TabIndex = 1;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 35);
+            this.label2.Location = new System.Drawing.Point(16, 40);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(48, 13);
+            this.label2.Size = new System.Drawing.Size(58, 16);
             this.label2.TabIndex = 2;
             this.label2.Text = "Location";
             // 
             // gameLocation
             // 
-            this.gameLocation.Location = new System.Drawing.Point(75, 30);
+            this.gameLocation.Location = new System.Drawing.Point(100, 37);
+            this.gameLocation.Margin = new System.Windows.Forms.Padding(4);
             this.gameLocation.Name = "gameLocation";
-            this.gameLocation.Size = new System.Drawing.Size(184, 20);
+            this.gameLocation.Size = new System.Drawing.Size(244, 22);
             this.gameLocation.TabIndex = 3;
             // 
             // selectLocation
             // 
-            this.selectLocation.Location = new System.Drawing.Point(258, 30);
+            this.selectLocation.Location = new System.Drawing.Point(344, 34);
+            this.selectLocation.Margin = new System.Windows.Forms.Padding(4);
             this.selectLocation.Name = "selectLocation";
-            this.selectLocation.Size = new System.Drawing.Size(24, 23);
+            this.selectLocation.Size = new System.Drawing.Size(32, 28);
             this.selectLocation.TabIndex = 4;
             this.selectLocation.Text = "...";
             this.selectLocation.UseVisualStyleBackColor = true;
@@ -90,24 +95,27 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(12, 61);
+            this.label3.Location = new System.Drawing.Point(16, 70);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(57, 13);
+            this.label3.Size = new System.Drawing.Size(71, 16);
             this.label3.TabIndex = 5;
             this.label3.Text = "Arguments";
             // 
             // gameArguments
             // 
-            this.gameArguments.Location = new System.Drawing.Point(75, 58);
+            this.gameArguments.Location = new System.Drawing.Point(100, 67);
+            this.gameArguments.Margin = new System.Windows.Forms.Padding(4);
             this.gameArguments.Name = "gameArguments";
-            this.gameArguments.Size = new System.Drawing.Size(207, 20);
+            this.gameArguments.Size = new System.Drawing.Size(275, 22);
             this.gameArguments.TabIndex = 6;
             // 
             // saveGame
             // 
-            this.saveGame.Location = new System.Drawing.Point(75, 164);
+            this.saveGame.Location = new System.Drawing.Point(119, 174);
+            this.saveGame.Margin = new System.Windows.Forms.Padding(4);
             this.saveGame.Name = "saveGame";
-            this.saveGame.Size = new System.Drawing.Size(61, 24);
+            this.saveGame.Size = new System.Drawing.Size(81, 30);
             this.saveGame.TabIndex = 7;
             this.saveGame.Text = "Save";
             this.saveGame.UseVisualStyleBackColor = true;
@@ -115,9 +123,10 @@
             // 
             // cancelButton
             // 
-            this.cancelButton.Location = new System.Drawing.Point(142, 164);
+            this.cancelButton.Location = new System.Drawing.Point(208, 175);
+            this.cancelButton.Margin = new System.Windows.Forms.Padding(4);
             this.cancelButton.Name = "cancelButton";
-            this.cancelButton.Size = new System.Drawing.Size(61, 23);
+            this.cancelButton.Size = new System.Drawing.Size(81, 28);
             this.cancelButton.TabIndex = 8;
             this.cancelButton.Text = "Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
@@ -126,24 +135,27 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 87);
+            this.label4.Location = new System.Drawing.Point(16, 94);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(50, 26);
+            this.label4.Size = new System.Drawing.Size(63, 32);
             this.label4.TabIndex = 9;
             this.label4.Text = "Artwork\r\n(optional)";
             // 
             // gameArtwork
             // 
-            this.gameArtwork.Location = new System.Drawing.Point(75, 87);
+            this.gameArtwork.Location = new System.Drawing.Point(100, 97);
+            this.gameArtwork.Margin = new System.Windows.Forms.Padding(4);
             this.gameArtwork.Name = "gameArtwork";
-            this.gameArtwork.Size = new System.Drawing.Size(184, 20);
+            this.gameArtwork.Size = new System.Drawing.Size(244, 22);
             this.gameArtwork.TabIndex = 10;
             // 
             // selectArt
             // 
-            this.selectArt.Location = new System.Drawing.Point(258, 87);
+            this.selectArt.Location = new System.Drawing.Point(344, 94);
+            this.selectArt.Margin = new System.Windows.Forms.Padding(4);
             this.selectArt.Name = "selectArt";
-            this.selectArt.Size = new System.Drawing.Size(24, 23);
+            this.selectArt.Size = new System.Drawing.Size(32, 28);
             this.selectArt.TabIndex = 11;
             this.selectArt.Text = "...";
             this.selectArt.UseVisualStyleBackColor = true;
@@ -152,9 +164,10 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(12, 126);
+            this.label5.Location = new System.Drawing.Point(16, 137);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(45, 13);
+            this.label5.Size = new System.Drawing.Size(56, 16);
             this.label5.TabIndex = 12;
             this.label5.Text = "Favorite";
             this.label5.Click += new System.EventHandler(this.label5_Click);
@@ -162,18 +175,19 @@
             // favoriteCheckBox
             // 
             this.favoriteCheckBox.AutoSize = true;
-            this.favoriteCheckBox.Location = new System.Drawing.Point(75, 126);
+            this.favoriteCheckBox.Location = new System.Drawing.Point(100, 138);
+            this.favoriteCheckBox.Margin = new System.Windows.Forms.Padding(4);
             this.favoriteCheckBox.Name = "favoriteCheckBox";
-            this.favoriteCheckBox.Size = new System.Drawing.Size(15, 14);
+            this.favoriteCheckBox.Size = new System.Drawing.Size(18, 17);
             this.favoriteCheckBox.TabIndex = 13;
             this.favoriteCheckBox.UseVisualStyleBackColor = true;
             this.favoriteCheckBox.CheckedChanged += new System.EventHandler(this.favoriteCheckBox_CheckedChanged);
             // 
             // ItemEditor
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(296, 200);
+            this.ClientSize = new System.Drawing.Size(395, 249);
             this.ControlBox = false;
             this.Controls.Add(this.favoriteCheckBox);
             this.Controls.Add(this.label5);
@@ -191,6 +205,7 @@
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "ItemEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Add or Edit Game";
