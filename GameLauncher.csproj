@@ -57,6 +57,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Helpers\Helpers.cs" />
     <Compile Include="Helpers\MessageBoxManager.cs" />
