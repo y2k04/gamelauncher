@@ -117,15 +117,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Windows.SDK.Win32Docs">
-      <Version>0.1.42-alpha</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Windows.SDK.Win32Metadata">
-      <Version>62.0.23-preview</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Windows.WDK.Win32Metadata">
-      <Version>0.12.8-experimental</Version>
-    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
     </PackageReference>

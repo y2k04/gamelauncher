@@ -14,7 +14,6 @@ namespace GameLauncher
     {
         readonly string configJSON = $@"{Environment.CurrentDirectory}\config.json";
         List<Game> games = [];
-        List<Game> visibleGames = [];
         Game selectedGame = new();
         readonly Timer processCheck = new() { Enabled = true };
         readonly Dictionary<Game, Timer> gameTimers = [];
@@ -70,17 +69,17 @@ namespace GameLauncher
 
         private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (visibleGames.Count == 0 || e.Node.Index >= visibleGames.Count)
+            if (e.Node?.Tag is not Game game)
                 return;
 
-            if (visibleGames[e.Node.Index].Name != selectedGame.Name)
+            if (game.Name != selectedGame.Name)
             {
                 selectedGameName.Visible =
                     launchGame.Visible =
                     selectedGameArt.Visible =
                     playTimeContainer.Visible = true;
 
-                selectedGame = visibleGames[e.Node.Index];
+                selectedGame = game;
                 selectedGameName.Text = selectedGame.Name;
                 playTimeLabel.Text = Helpers.FormatPlayTime(selectedGame.PlayTime);
 
@@ -202,11 +201,10 @@ namespace GameLauncher
         private void UpdateGameList()
         {
             gameList.Nodes.Clear();
-            visibleGames = showOnlyFavorites ? [.. games.Where(g => g.IsFavorite)] : games;
-            foreach (var game in visibleGames)
+            var filtered = showOnlyFavorites ? [.. games.Where(g => g.IsFavorite)] : games;
+            foreach (var game in filtered)
             {
-                var node = new TreeNode($"{StarChar} {game.Name}");
-                node.Tag = game;
+                var node = new TreeNode($"{StarChar} {game.Name}") { Tag = game };
                 if (game.IsFavorite)
                 {
                     node.ForeColor = Color.Gold; // optional, affects only non-owner-draw
@@ -352,13 +350,12 @@ namespace GameLauncher
         {
             showOnlyFavorites = !showOnlyFavorites;
             UpdateGameList();
-            gameList.SelectedNode = null;
-            selectedGame = new Game();
+            selectedGame = new();
 
             selectedGameName.Visible =
-                launchGame.Visible =
-                selectedGameArt.Visible =
-                playTimeContainer.Visible = false;
+                    launchGame.Visible =
+                    selectedGameArt.Visible =
+                    playTimeContainer.Visible = false;
 
             favoritestoggle.FlatStyle = FlatStyle.Standard;
             favoritestoggle.BackColor = showOnlyFavorites ? Color.IndianRed : SystemColors.Control;
@@ -367,12 +364,10 @@ namespace GameLauncher
 
         private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
         {
-            if (e.Node.Index >= visibleGames.Count)
+            if (e.Node?.Tag is not Game game)
                 return;
 
-            var g = visibleGames[e.Node.Index];
-            var full = e.Node.Text;
-
+            var full = game.Name;
             var name = full.StartsWith(StarChar + " ") ? full.Substring(StarChar.Length + 1) : full;
             var bounds = new Rectangle(e.Bounds.X, e.Bounds.Y, gameList.Width, e.Bounds.Height);
             bool isSelected = (e.State & TreeNodeStates.Selected) != 0;
@@ -380,7 +375,7 @@ namespace GameLauncher
             Brush textBrush = isSelected ? SystemBrushes.HighlightText : SystemBrushes.ControlText;
             e.Graphics.FillRectangle(isSelected ? SystemBrushes.Highlight : SystemBrushes.Window, bounds);
 
-            if (g.IsFavorite)
+            if (game.IsFavorite)
             {
                 float offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
                 e.Graphics.DrawString(StarChar, StarFont, StarBrush, bounds.Location);

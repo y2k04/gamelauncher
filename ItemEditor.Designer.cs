@@ -170,7 +170,6 @@
             this.label5.Size = new System.Drawing.Size(56, 16);
             this.label5.TabIndex = 12;
             this.label5.Text = "Favorite";
-            this.label5.Click += new System.EventHandler(this.label5_Click);
             // 
             // favoriteCheckBox
             // 
@@ -181,7 +180,6 @@
             this.favoriteCheckBox.Size = new System.Drawing.Size(18, 17);
             this.favoriteCheckBox.TabIndex = 13;
             this.favoriteCheckBox.UseVisualStyleBackColor = true;
-            this.favoriteCheckBox.CheckedChanged += new System.EventHandler(this.favoriteCheckBox_CheckedChanged);
             // 
             // ItemEditor
             // 

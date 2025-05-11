@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
 
 namespace GameLauncher
 {
@@ -76,21 +75,6 @@ namespace GameLauncher
             {
                 gameArtwork.Text = file.FileName;
             }
-        }
-
-        private void label5_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void favoriteCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }
