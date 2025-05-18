@@ -101,12 +101,12 @@
             this.deleteGameButton});
             this.menu.Name = "contextMenuStrip1";
             this.menu.ShowImageMargin = false;
-            this.menu.Size = new System.Drawing.Size(186, 104);
+            this.menu.Size = new System.Drawing.Size(141, 76);
             // 
             // addGameButton
             // 
             this.addGameButton.Name = "addGameButton";
-            this.addGameButton.Size = new System.Drawing.Size(185, 24);
+            this.addGameButton.Size = new System.Drawing.Size(140, 24);
             this.addGameButton.Text = "Add Game";
             this.addGameButton.Click += new System.EventHandler(this.addGameButton_Click);
             // 
@@ -114,7 +114,7 @@
             // 
             this.editGameButton.Enabled = false;
             this.editGameButton.Name = "editGameButton";
-            this.editGameButton.Size = new System.Drawing.Size(185, 24);
+            this.editGameButton.Size = new System.Drawing.Size(140, 24);
             this.editGameButton.Text = "Edit Game";
             this.editGameButton.Click += new System.EventHandler(this.editGameButton_Click);
             // 
@@ -122,7 +122,7 @@
             // 
             this.deleteGameButton.Enabled = false;
             this.deleteGameButton.Name = "deleteGameButton";
-            this.deleteGameButton.Size = new System.Drawing.Size(185, 24);
+            this.deleteGameButton.Size = new System.Drawing.Size(140, 24);
             this.deleteGameButton.Text = "Delete Game";
             this.deleteGameButton.Click += new System.EventHandler(this.deleteGameButton_Click);
             // 
@@ -227,7 +227,7 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Launcher";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Game Launcher";
+            this.Text = "GameLauncher";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Launcher_FormClosing);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
