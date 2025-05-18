@@ -18,8 +18,6 @@ namespace GameLauncher
         readonly Timer processCheck = new() { Enabled = true };
         readonly Dictionary<Game, Timer> gameTimers = [];
 
-        bool showOnlyFavorites = false;
-
         FileStream stream;
         StreamReader reader;
         StreamWriter writer;
@@ -44,7 +42,7 @@ namespace GameLauncher
             writer = new StreamWriter(stream) { AutoFlush = true };
 
             var rawData = await reader.ReadToEndAsync();
-            if (rawData.StartsWith("[") || rawData == string.Empty) // Compatibility fix with v1.2 and below
+            if (rawData.StartsWith("[")) // Compatibility fix with v1.2 and below
             {
                 config = new()
                 {
@@ -54,11 +52,20 @@ namespace GameLauncher
 
                 UpdateData(); // Update to new schema
             }
+            else if (string.IsNullOrEmpty(rawData))
+            {
+                config = new()
+                {
+                    Games = new(),
+                    FavouritesToggled = false
+                };
+
+                UpdateData();
+            }
             else
             {
                 config = JsonConvert.DeserializeObject<Config>(rawData);
                 config.Games = config.Games.OrderBy(x => x.Name).ToList();
-                showOnlyFavorites = config.FavouritesToggled;
             }
 
             UpdateGameList();
@@ -218,7 +225,7 @@ namespace GameLauncher
         private void UpdateGameList()
         {
             gameList.Nodes.Clear();
-            var filtered = showOnlyFavorites ? [.. config.Games.Where(g => g.IsFavorite)] : config.Games;
+            var filtered = config.FavouritesToggled ? [.. config.Games.Where(g => g.IsFavorite)] : config.Games;
             foreach (var game in filtered)
             {
                 var node = new TreeNode($"{StarChar} {game.Name}") { Tag = game };
@@ -229,6 +236,8 @@ namespace GameLauncher
                 }
                 gameList.Nodes.Add(node);
             }
+            favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
+            favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
         }
 
         private void launchGame_Click(object sender, EventArgs e)
@@ -365,7 +374,8 @@ namespace GameLauncher
 
         private void favoritesToggle_Click(object sender, EventArgs e)
         {
-            showOnlyFavorites = !showOnlyFavorites;
+            config.FavouritesToggled = !config.FavouritesToggled;
+            UpdateData();
             UpdateGameList();
             selectedGame = new();
 
@@ -374,9 +384,8 @@ namespace GameLauncher
                     selectedGameArt.Visible =
                     playTimeContainer.Visible = false;
 
-            favoritestoggle.FlatStyle = FlatStyle.Standard;
-            favoritestoggle.BackColor = showOnlyFavorites ? Color.IndianRed : SystemColors.Control;
-            favoritestoggle.ForeColor = showOnlyFavorites ? Color.LightYellow : SystemColors.ControlText;
+            favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
+            favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
         }
 
         private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
