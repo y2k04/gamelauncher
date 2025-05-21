@@ -16,7 +16,7 @@ public static class ReleaseUtil
     private static string _zipFile = "GameLauncher-{0}.zip";
     public static string ZipFileName { get => _zipFile; }
     private const string RepoOrg = "y2k04";
-    private const string RepoUri = "gamelauncher";
+    private const string RepoName = "gamelauncher";
 
     public static DownloadDataCompletedEventHandler DownloadDataCompleted { get; set; }
     public static AsyncCompletedEventHandler DownloadFileCompleted { get; set; }
@@ -37,7 +37,7 @@ public static class ReleaseUtil
         try
         {
             var ghClient = new GitHubClient(new ProductHeaderValue("GameLauncher", _curVersion));
-            var releases = await ghClient.Repository.Release.GetAll(RepoOrg, RepoUri);
+            var releases = await ghClient.Repository.Release.GetAll(RepoOrg, RepoName);
             var latestRel = releases[0];
 
             if (latestRel != null)
@@ -70,8 +70,10 @@ public static class ReleaseUtil
     {
         try
         {
+            if (!await CheckForUpdates()) return;
+
             var ghClient = new GitHubClient(new ProductHeaderValue("GameLauncher", _curVersion));
-            var releases = await ghClient.Repository.Release.GetAll(RepoOrg, RepoUri);
+            var releases = await ghClient.Repository.Release.GetAll(RepoOrg, RepoName);
             var latestRel = releases[0];
 
             if (latestRel != null)
@@ -82,6 +84,7 @@ public static class ReleaseUtil
                     // if the exact archive file is found, download it.
                     if (asset.Name == string.Format(_zipFile, latestRel.TagName))
                     {
+                        _zipFile = string.Format(_zipFile, latestRel.TagName);
                         LoggingUtil.Info("Found the asset! Downloading...");
                         using var wc = new WebClient();
                         if (DownloadDataCompleted != null) wc.DownloadDataCompleted += DownloadDataCompleted;

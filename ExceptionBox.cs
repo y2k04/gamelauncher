@@ -39,27 +39,32 @@ namespace GameLauncher
 
         private void AnimateSize(Size property, Size newProperty)
         {
-            AnimateSize(property, newProperty.Width, newProperty.Height);
+            AnimateSize(property, newProperty, EasingFunctions.EaseInOut, 300);
         }
 
-        private void AnimateSize(Size property, int width, int height)
+        private void AnimateSize(Size startSize, Size targetSize, Func<double, double> easingFunction, int duration = 500)
         {
-            property = new Size(property.Width, property.Height);
-
             Task.Run(async () =>
             {
-                while (property.Width != width || property.Height != height)
+                var stopwatch = Stopwatch.StartNew();
+                while (stopwatch.ElapsedMilliseconds < duration)
                 {
-                    int widthStep = Math.Sign(width - property.Width);
-                    int heightStep = Math.Sign(height - property.Height);
+                    double progress = (double)stopwatch.ElapsedMilliseconds / duration;
+                    progress = Math.Min(progress, 1.0); // Clamp progress to 1.0
 
-                    property.Width += widthStep;
-                    property.Height += heightStep;
+                    double easedProgress = easingFunction(progress);
 
-                    this.Invoke(() => this.Size = property);
+                    int newWidth = (int)(startSize.Width + (targetSize.Width - startSize.Width) * easedProgress);
+                    int newHeight = (int)(startSize.Height + (targetSize.Height - startSize.Height) * easedProgress);
+
+                    this.Invoke(() => this.Size = new Size(newWidth, newHeight));
                     this.Invoke(() => this.Refresh());
-                    await Task.Delay(TimeSpan.FromMilliseconds(0.1));
+
+                    await Task.Delay(10); // Adjust for smoothness
                 }
+
+                // Ensure final size is set
+                this.Invoke(() => this.Size = targetSize);
             });
         }
 

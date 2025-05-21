@@ -66,59 +66,56 @@ namespace GameLauncher
                     PInvoke.SetForegroundWindow(handle);
                     return 0;
                 }
+                LoggingUtil.Info("Checking for updates...");
+
+                if (ReleaseUtil.CheckForUpdates().ConfigureAwait(false).GetAwaiter().GetResult())
+                {
+                    if (MessageBox.Show("There's an update available! Do you want to download it?", "Game Launcher", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                    == DialogResult.Yes)
+                    {
+                        var folderBrowserDlg = new FolderBrowserDialog();
+                        folderBrowserDlg.Description = "Select an folder where to download the latest \"*.zip\" of GameLauncher.";
+                        folderBrowserDlg.RootFolder = Environment.SpecialFolder.Desktop;
+                        folderBrowserDlg.ShowNewFolderButton = true;
+                        if (folderBrowserDlg.ShowDialog() == DialogResult.OK)
+                        {
+                            if (string.IsNullOrEmpty(folderBrowserDlg.SelectedPath))
+                                throw new NullReferenceException("\"folderBrowserDlg.SelectedPath\" returned null! Don't ask me why it's possible.");
+
+                            if (!Directory.Exists(folderBrowserDlg.SelectedPath))
+                                throw new DirectoryNotFoundException("The selected directory is invalid!");
+
+                            ReleaseUtil.DownloadFileCompleted += (sender, e) =>
+                            {
+                                MessageBox.Show(
+                                    string.Format("\"{0}\" has been downloaded into \"{1}\"!\n" +
+                                    "Extract the archive using File Explorer or any program that can be associated with the \"*.zip\" type.",
+                                    ReleaseUtil.ZipFileName, folderBrowserDlg.SelectedPath), "Game Launcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                Application.Exit();
+                            };
+
+                            ReleaseUtil.DownloadLatestRelease(folderBrowserDlg.SelectedPath + "/" + ReleaseUtil.ZipFileName)
+                                .ConfigureAwait(false).GetAwaiter().GetResult();
+                        }
+                    }
+                }
                 else
                 {
-                    LoggingUtil.Info("Checking for updates...");
-
-                    Task.Run(async () =>
-                    {
-                        if (await ReleaseUtil.CheckForUpdates())
-                        {
-                            if (MessageBox.Show("There's an update available! Do you want to download it?", "Game Launcher", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                            != DialogResult.Yes) return;
-
-                            var folderBrowserDlg = new FolderBrowserDialog();
-                            folderBrowserDlg.Description = "Select an folder where to download the latest \"*.zip\" of GameLauncher.";
-                            folderBrowserDlg.RootFolder = Environment.SpecialFolder.Desktop;
-                            folderBrowserDlg.ShowNewFolderButton = true;
-                            if (folderBrowserDlg.ShowDialog() == DialogResult.OK)
-                            {
-                                if (string.IsNullOrEmpty(folderBrowserDlg.SelectedPath))
-                                    throw new NullReferenceException("\"folderBrowserDlg.SelectedPath\" returned null! Don't ask me why it's possible.");
-
-                                if (!Directory.Exists(folderBrowserDlg.SelectedPath))
-                                    throw new DirectoryNotFoundException("The selected directory is invalid!");
-
-                                ReleaseUtil.DownloadFileCompleted += (sender, e) =>
-                                {
-                                    MessageBox.Show(
-                                        string.Format("\"{0}\" has been downloaded into \"{1}\"!\n" +
-                                        "Extract the archive using File Explorer or any program that can be associated with the \"*.zip\" type.",
-                                        ReleaseUtil.ZipFileName, folderBrowserDlg.SelectedPath), "Game Launcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    Environment.Exit(0);
-                                };
-
-                                await ReleaseUtil.DownloadLatestRelease(folderBrowserDlg.SelectedPath + "/" + ReleaseUtil.ZipFileName);
-                            }
-                        }
-                        else
-                        {
-                            LoggingUtil.Info("Client up-to-date with the latest version.");
-                        }
-                    });
-
-                    MessageBoxManager.Abort = "Scan";
-                    MessageBoxManager.Retry =
-                    MessageBoxManager.Cancel = "Browse";
-                    MessageBoxManager.Register();
-                    Application.Run(new Launcher());
-                    MessageBoxManager.Unregister();
+                    LoggingUtil.Info("Client up-to-date with the latest version.");
                 }
+
+                MessageBoxManager.Abort = "Scan";
+                MessageBoxManager.Retry =
+                MessageBoxManager.Cancel = "Browse";
+                MessageBoxManager.Register();
+                Application.Run(new Launcher());
+                MessageBoxManager.Unregister();
+
                 _mutex.ReleaseMutex();
 
                 LoggingUtil.Info($"Goodbye, {Environment.UserName}!");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 var excBox = new ExceptionBox(e);
                 LoggingUtil.Error($"FATAL ERROR: {e.Message}");
