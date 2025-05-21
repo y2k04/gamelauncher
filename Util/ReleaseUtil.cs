@@ -47,6 +47,7 @@ public static class ReleaseUtil
                 var latestVersion = new Version(latestRel.TagName.TrimStart('v').TrimEnd());
 
                 LoggingUtil.Info($"Comparing client version {currentVersion.ToString()} to latest version from remote {latestVersion.ToString()}");
+                _zipFile = string.Format(_zipFile, latestRel.TagName);
 
                 return currentVersion < latestVersion;
             }
@@ -84,13 +85,12 @@ public static class ReleaseUtil
                     // if the exact archive file is found, download it.
                     if (asset.Name == string.Format(_zipFile, latestRel.TagName))
                     {
-                        _zipFile = string.Format(_zipFile, latestRel.TagName);
                         LoggingUtil.Info("Found the asset! Downloading...");
                         using var wc = new WebClient();
                         if (DownloadDataCompleted != null) wc.DownloadDataCompleted += DownloadDataCompleted;
                         if (DownloadFileCompleted != null) wc.DownloadFileCompleted += DownloadFileCompleted;
                         if (DownloadProgressChanged != null) wc.DownloadProgressChanged += DownloadProgressChanged;
-                        wc.DownloadFileAsync(new Uri(asset.BrowserDownloadUrl), filePath);
+                        await wc.DownloadFileTaskAsync(new Uri(asset.BrowserDownloadUrl, UriKind.Absolute), filePath);
                         return;
                     }
                 }

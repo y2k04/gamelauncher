@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -13,7 +14,7 @@ namespace GameLauncher
     public partial class Launcher : Form
     {
         readonly string configJSON = $@"{Environment.CurrentDirectory}\config.json";
-        List<Game> games = [];
+        Config config;
         Game selectedGame = new();
         readonly Timer processCheck = new() { Enabled = true };
         readonly Dictionary<Game, Timer> gameTimers = [];
@@ -22,9 +23,15 @@ namespace GameLauncher
         StreamReader reader;
         StreamWriter writer;
 
+        readonly Font StarFont = new Font(DefaultFont.FontFamily, DefaultFont.Size + 2, FontStyle.Bold);
+        readonly Brush StarBrush = Brushes.Gold;
+        const string StarChar = "★";
+
         public Launcher()
         {
             InitializeComponent();
+            gameList.DrawMode = TreeViewDrawMode.OwnerDrawText;
+            gameList.DrawNode += GameList_DrawNode;
             SetupLauncher();
             LoggingUtil.Info("Binding event: \"ProcessCheck_Tick\" to \"processCheck.Tick\"");
             processCheck.Tick += ProcessCheck_Tick;
@@ -37,15 +44,39 @@ namespace GameLauncher
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream) { AutoFlush = true };
 
-            var data = await reader.ReadToEndAsync();
-
-            if (data != "[]" && data != string.Empty)
+            var rawData = await reader.ReadToEndAsync();
+            if (rawData.StartsWith("[")) // Compatibility fix with v1.2 and below
             {
-                games = [.. JsonConvert.DeserializeObject<List<Game>>(data).OrderBy(x => x.Name)];
-                games.ForEach(game => gameList.Nodes.Add(game.Name));
-                gameList.SelectedNode = gameList.Nodes[0];
-                editGameButton.Enabled =
-                    deleteGameButton.Enabled = true;
+                config = new()
+                {
+                    Games = JsonConvert.DeserializeObject<List<Game>>(rawData).OrderBy(x => x.Name).ToList(),
+                    FavouritesToggled = false
+                };
+
+                UpdateData(); // Update to new schema
+            }
+            else if (string.IsNullOrEmpty(rawData))
+            {
+                config = new()
+                {
+                    Games = new(),
+                    FavouritesToggled = false
+                };
+
+                UpdateData();
+            }
+            else
+            {
+                config = JsonConvert.DeserializeObject<Config>(rawData);
+                config.Games = config.Games.OrderBy(x => x.Name).ToList();
+            }
+
+            UpdateGameList();
+
+            if (gameList.Nodes.Count != 0)
+            {
+                gameList.SelectedNode = gameList.TopNode;
+                editGameButton.Enabled = deleteGameButton.Enabled = true;
                 emptyLibraryNote.Visible = false;
             }
             else
@@ -53,26 +84,29 @@ namespace GameLauncher
                 selectedGameName.Visible =
                     launchGame.Visible =
                     selectedGameArt.Visible =
-                        playTimeContainer.Visible = false;
+                    playTimeContainer.Visible = false;
             }
         }
 
         private void UpdateData()
         {
             stream.SetLength(0);
-            writer.Write(JsonConvert.SerializeObject(games, Formatting.Indented));
+            writer.Write(JsonConvert.SerializeObject(config, Formatting.Indented));
         }
 
         private void gameList_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (games[e.Node.Index].Name != selectedGame.Name)
+            if (e.Node?.Tag is not Game game)
+                return;
+
+            if (game.Name != selectedGame.Name)
             {
                 selectedGameName.Visible =
-                        launchGame.Visible =
-                        selectedGameArt.Visible =
-                        playTimeContainer.Visible = true;
+                    launchGame.Visible =
+                    selectedGameArt.Visible =
+                    playTimeContainer.Visible = true;
 
-                selectedGame = games[e.Node.Index];
+                selectedGame = game;
                 selectedGameName.Text = selectedGame.Name;
                 playTimeLabel.Text = Helpers.FormatPlayTime(selectedGame.PlayTime);
 
@@ -82,7 +116,7 @@ namespace GameLauncher
                     selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
 
                 if (!File.Exists(selectedGame.Location))
-                    TryFixMissingGame(e.Node.Index);
+                    TryFixMissingGame(config.Games.IndexOf(selectedGame));
             }
         }
 
@@ -95,13 +129,16 @@ namespace GameLauncher
 
             switch (errormsg)
             {
-                /*Scan*/ case DialogResult.Abort:
+                /*Scan*/
+                case DialogResult.Abort:
                     TryScanMissingGame(index);
                     break;
-                /*Browse*/ case DialogResult.Retry:
+                /*Browse*/
+                case DialogResult.Retry:
                     TryBrowseMissingGame(index);
                     break;
-                /*Ignore*/ default:
+                /*Ignore*/
+                default:
                     launchGame.Text = "Not found";
                     launchGame.Enabled = false;
                     break;
@@ -145,7 +182,8 @@ namespace GameLauncher
                         launchGame.Enabled = false;
                         break;
                 }
-            } else
+            }
+            else
             {
                 var msg = MessageBox.Show($"The game was found on your {newPath.Substring(0, 1)} drive.{Environment.NewLine}" +
                     $"Did you want to save these changes?", "Scan success", MessageBoxButtons.YesNo);
@@ -153,7 +191,7 @@ namespace GameLauncher
                 switch (msg)
                 {
                     case DialogResult.Yes:
-                        selectedGame.Location = games[index].Location = newPath;
+                        selectedGame.Location = config.Games[index].Location = newPath;
                         UpdateData();
                         launchGame.Text = "Play";
                         launchGame.Enabled = true;
@@ -168,7 +206,7 @@ namespace GameLauncher
 
         private void TryBrowseMissingGame(int index)
         {
-            var filename = Path.GetFileName(games[index].Location);
+            var filename = Path.GetFileName(config.Games[index].Location);
             OpenFileDialog file = new()
             {
                 CheckFileExists = true,
@@ -181,12 +219,30 @@ namespace GameLauncher
                 var confirm = MessageBox.Show("Are you sure you want to save these changes?", "Manual search", MessageBoxButtons.YesNo);
                 if (confirm == DialogResult.Yes)
                 {
-                    selectedGame.Location = games[index].Location = file.FileName;
+                    selectedGame.Location = config.Games[index].Location = file.FileName;
                     UpdateData();
                     launchGame.Text = "Play";
                     launchGame.Enabled = true;
                 }
             }
+        }
+
+        private void UpdateGameList()
+        {
+            gameList.Nodes.Clear();
+            var filtered = config.FavouritesToggled ? [.. config.Games.Where(g => g.IsFavorite)] : config.Games;
+            foreach (var game in filtered)
+            {
+                var node = new TreeNode($"{StarChar} {game.Name}") { Tag = game };
+                if (game.IsFavorite)
+                {
+                    node.ForeColor = Color.Gold; // optional, affects only non-owner-draw
+                    node.NodeFont = new Font(gameList.Font.FontFamily, gameList.Font.Size + 2, FontStyle.Bold);
+                }
+                gameList.Nodes.Add(node);
+            }
+            favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
+            favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
         }
 
         private void launchGame_Click(object sender, EventArgs e)
@@ -221,7 +277,7 @@ namespace GameLauncher
                     if (gameTimers.ContainsKey(selectedGame))
                     {
                         gameTimers[selectedGame].Enabled = false;
-                        games[games.LastIndexOf(selectedGame)].PlayTime = Convert.ToDouble(gameTimers[selectedGame].Tag);
+                        config.Games[config.Games.LastIndexOf(selectedGame)].PlayTime = Convert.ToDouble(gameTimers[selectedGame].Tag);
                         UpdateData();
                         gameTimers.Remove(selectedGame);
                     }
@@ -242,7 +298,7 @@ namespace GameLauncher
                     }
                 }
             }
-            catch {}
+            catch { }
         }
 
         private void addGameButton_Click(object sender, EventArgs e)
@@ -253,21 +309,21 @@ namespace GameLauncher
                 if (!File.Exists(editor.gameArtwork.Text) || editor.gameArtwork.Text == string.Empty)
                     editor.gameArtwork.Text = "";
 
-                games.Add(new Game(
+                var game = new Game(
                     editor.gameName.Text,
                     editor.gameLocation.Text,
                     editor.gameArguments.Text,
-                    editor.gameArtwork.Text
-                ));
+                    editor.gameArtwork.Text,
+                    0,
+                    editor.FavoriteChecked
+                );
+                config.Games.Add(game);
 
                 UpdateData();
+                UpdateGameList();
 
-                gameList.SelectedNode = gameList.Nodes.Add(editor.gameName.Text);
-
-                selectedGameName.Visible =
-                    launchGame.Visible =
-                    selectedGameArt.Visible =
-                        playTimeContainer.Visible = true;
+                gameList.SelectedNode = gameList.TopNode;
+                editGameButton.Enabled = deleteGameButton.Enabled = true;
                 emptyLibraryNote.Visible = false;
 
                 LoggingUtil.Info($"Added game to the list: {editor.gameName.Text}");
@@ -279,16 +335,17 @@ namespace GameLauncher
             ItemEditor editor = new(selectedGame);
             if (editor.ShowDialog() == DialogResult.OK)
             {
-                games[gameList.SelectedNode.Index] = new Game(
+                config.Games[gameList.SelectedNode.Index] = new Game(
                     editor.gameName.Text,
                     editor.gameLocation.Text,
                     editor.gameArguments.Text,
                     editor.gameArtwork.Text,
-                    selectedGame.PlayTime
+                    selectedGame.PlayTime,
+                    editor.FavoriteChecked
                 );
 
-                gameList.SelectedNode.Text = editor.gameName.Text;
-                selectedGame = games[gameList.SelectedNode.Index];
+                selectedGame = config.Games[gameList.SelectedNode.Index];
+                gameList.SelectedNode.Text = selectedGameName.Text = selectedGame.Name;
 
                 selectedGameArt.ImageLocation = string.Empty;
                 selectedGameArt.Image = null;
@@ -306,7 +363,7 @@ namespace GameLauncher
         {
             if (MessageBox.Show($"Are you sure you want to delete '{selectedGame.Name}'?", "Game Launcher", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                games.RemoveRange(gameList.SelectedNode.Index, 1);
+                config.Games.RemoveRange(gameList.SelectedNode.Index, 1);
                 gameList.Nodes.Remove(gameList.SelectedNode);
                 if (gameList.Nodes.Count != 0)
                     gameList.SelectedNode = gameList.TopNode;
@@ -315,12 +372,54 @@ namespace GameLauncher
                     selectedGameName.Visible =
                         launchGame.Visible =
                         selectedGameArt.Visible =
-                        playTimeContainer.Visible = false;
+                        playTimeContainer.Visible =
+                        editGameButton.Enabled =
+                        deleteGameButton.Enabled = false;
                     emptyLibraryNote.Visible = true;
                 }
                 UpdateData();
-                LoggingUtil.Info($"{selectedGame.Name} has been deleted!");
             }
+        }
+
+        private void favoritesToggle_Click(object sender, EventArgs e)
+        {
+            config.FavouritesToggled = !config.FavouritesToggled;
+            UpdateData();
+            UpdateGameList();
+            selectedGame = new();
+
+            selectedGameName.Visible =
+                    launchGame.Visible =
+                    selectedGameArt.Visible =
+                    playTimeContainer.Visible = false;
+
+            favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
+            favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
+        }
+
+        private void GameList_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            if (e.Node?.Tag is not Game game)
+                return;
+
+            var full = game.Name;
+            var name = full.StartsWith(StarChar + " ") ? full.Substring(StarChar.Length + 1) : full;
+            var bounds = new Rectangle(e.Bounds.X, e.Bounds.Y, gameList.Width, e.Bounds.Height);
+            bool isSelected = (e.State & TreeNodeStates.Selected) != 0;
+
+            Brush textBrush = isSelected ? SystemBrushes.HighlightText : SystemBrushes.ControlText;
+            e.Graphics.FillRectangle(isSelected ? SystemBrushes.Highlight : SystemBrushes.Window, bounds);
+
+            if (game.IsFavorite)
+            {
+                float offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
+                e.Graphics.DrawString(StarChar, StarFont, StarBrush, bounds.Location);
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Left + offset, bounds.Top);
+            }
+            else
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
+
+            e.DrawDefault = false;
         }
 
         private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
@@ -333,7 +432,7 @@ namespace GameLauncher
             foreach (var timer in gameTimers)
             {
                 timer.Value.Enabled = false;
-                games[games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
+                config.Games[config.Games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
                 keysToRemove.Add(timer.Key);
             }
 

@@ -102,14 +102,14 @@ namespace GameLauncher
                 else
                 {
                     LoggingUtil.Info("Client up-to-date with the latest version.");
-                }
 
-                MessageBoxManager.Abort = "Scan";
-                MessageBoxManager.Retry =
-                MessageBoxManager.Cancel = "Browse";
-                MessageBoxManager.Register();
-                Application.Run(new Launcher());
-                MessageBoxManager.Unregister();
+                    MessageBoxManager.Abort = "Scan";
+                    MessageBoxManager.Retry =
+                    MessageBoxManager.Cancel = "Browse";
+                    MessageBoxManager.Register();
+                    Application.Run(new Launcher());
+                    MessageBoxManager.Unregister();
+                }
 
                 _mutex.ReleaseMutex();
 
