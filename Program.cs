@@ -27,6 +27,9 @@ namespace GameLauncher
         {
             try
             {
+                if (!Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs")))
+                    Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"));
+
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
@@ -56,7 +59,9 @@ namespace GameLauncher
                 }
 #endif
 
-                Console.SetOut(new MultiTextWriter(Console.Out, new ConsoleToFileWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _logFile))));
+                Console.SetOut(new MultiTextWriter(Console.Out, new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    "logs", _logFile), append: true)
+                { AutoFlush = true }));
                 LoggingUtil.Info("Program starting up...");
 
                 if (!_mutex.WaitOne(0, false))
@@ -102,14 +107,14 @@ namespace GameLauncher
                 else
                 {
                     LoggingUtil.Info("Client up-to-date with the latest version.");
-
-                    MessageBoxManager.Abort = "Scan";
-                    MessageBoxManager.Retry =
-                    MessageBoxManager.Cancel = "Browse";
-                    MessageBoxManager.Register();
-                    Application.Run(new Launcher());
-                    MessageBoxManager.Unregister();
                 }
+
+                MessageBoxManager.Abort = "Scan";
+                MessageBoxManager.Retry =
+                MessageBoxManager.Cancel = "Browse";
+                MessageBoxManager.Register();
+                Application.Run(new Launcher());
+                MessageBoxManager.Unregister();
 
                 _mutex.ReleaseMutex();
 
