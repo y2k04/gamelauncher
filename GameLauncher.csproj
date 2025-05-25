@@ -59,7 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EasingFunctions.cs" />
+    <Compile Include="Helpers\EasingFunctions.cs" />
     <Compile Include="ExceptionBox.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -83,14 +83,14 @@
     <Compile Include="ItemEditor.Designer.cs">
       <DependentUpon>ItemEditor.cs</DependentUpon>
     </Compile>
-    <Compile Include="MultiTextWriter.cs" />
+    <Compile Include="Helpers\MultiTextWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\SysCalls\SysCalls.cs" />
     <Compile Include="Helpers\SysCalls\SHFILEINFO.cs" />
     <Compile Include="Helpers\SysCalls\SHGFI.cs" />
-    <Compile Include="Util\LoggingUtil.cs" />
-    <Compile Include="Util\ReleaseUtil.cs" />
+    <Compile Include="Helpers\LoggingUtil.cs" />
+    <Compile Include="Helpers\ReleaseUtil.cs" />
     <EmbeddedResource Include="ExceptionBox.resx">
       <DependentUpon>ExceptionBox.cs</DependentUpon>
     </EmbeddedResource>

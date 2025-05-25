@@ -100,7 +100,7 @@ public static class ReleaseUtil
         }
         catch (Exception e)
         {
-            LoggingUtil.Error("Error downloading latest asset: " + e.Message);
+            LoggingUtil.Error($"Error downloading latest asset: {e.Message}");
         }
     }
 }

@@ -73,16 +73,16 @@
             this.label1.ForeColor = System.Drawing.Color.Red;
             this.label1.Location = new System.Drawing.Point(7, 13);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(525, 32);
+            this.label1.Size = new System.Drawing.Size(661, 41);
             this.label1.TabIndex = 2;
-            this.label1.Text = "An unexpected error occured in the application!";
+            this.label1.Text = "An unexpected error occurred in the application!";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(10, 45);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(594, 15);
+            this.label2.Size = new System.Drawing.Size(745, 20);
             this.label2.TabIndex = 3;
             this.label2.Text = "Well, that was unexpected. We\'re sorry that you\'ve experienced this problem! You " +
     "can report this problem at our\r\n";
@@ -93,7 +93,7 @@
             this.githubIssuesLink.BackColor = System.Drawing.Color.Transparent;
             this.githubIssuesLink.Location = new System.Drawing.Point(600, 45);
             this.githubIssuesLink.Name = "githubIssuesLink";
-            this.githubIssuesLink.Size = new System.Drawing.Size(70, 15);
+            this.githubIssuesLink.Size = new System.Drawing.Size(88, 20);
             this.githubIssuesLink.TabIndex = 4;
             this.githubIssuesLink.TabStop = true;
             this.githubIssuesLink.Text = "issues page.";
@@ -136,7 +136,7 @@
             // 
             // ExceptionBox
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(753, 493);
             this.Controls.Add(this.btnBreakInDebugger);

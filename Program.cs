@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using GameLauncher.Util;
 using Windows.Win32;
@@ -14,7 +12,7 @@ namespace GameLauncher
     internal static class Program
     {
         private static readonly Mutex _mutex = new(false, Path.GetFileName(Application.ExecutablePath));
-        private static readonly string _logFile = "gamelauncher-" + DateTime.Now.ToString("dd-MM-yyyy-hh-mm-ss") + ".log";
+        private static readonly string _logFile = $"{DateTime.Now:dd-MM-yyyy-HH-mm-ss}.log";
         public static bool IsDeveloperMode { get; private set; } =
 #if DEBUG
             true;
@@ -40,7 +38,7 @@ namespace GameLauncher
                 }
 
 #if DEBUG
-                // PracticeMedicine:
+                // @PracticeMedicine:
                 // the output encoding differs based on whether the app is a Console (debug) or Windows app (release).
                 // since because the flag also effects the default output encoding when reading from other processes'
                 // standard output, we explicitly set the encoding to get consistent behavior in the debug and
@@ -54,34 +52,30 @@ namespace GameLauncher
                     Console.OutputEncoding = System.Text.Encoding.Default;
                     LoggingUtil.Debug("Output encoding set to default.");
                 }
-                catch (IOException)
-                {
-                }
+                catch (IOException) {}
 #endif
-
-                Console.SetOut(new MultiTextWriter(Console.Out, new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    "logs", _logFile), append: true)
-                { AutoFlush = true }));
-                LoggingUtil.Info("Program starting up...");
+                Console.SetOut(new MultiTextWriter(Console.Out, new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", _logFile), append: true) { AutoFlush = true }));
+                LoggingUtil.Info("Starting up...");
 
                 if (!_mutex.WaitOne(0, false))
                 {
-                    HWND handle = PInvoke.FindWindow(null, "Game Launcher");
+                    HWND handle = PInvoke.FindWindow(null, "GameLauncher");
                     PInvoke.ShowWindow(handle, SHOW_WINDOW_CMD.SW_SHOW);
                     PInvoke.SetForegroundWindow(handle);
                     return 0;
                 }
-                LoggingUtil.Info("Checking for updates...");
 
+                LoggingUtil.Info("Checking for updates...");
                 if (ReleaseUtil.CheckForUpdates().ConfigureAwait(false).GetAwaiter().GetResult())
                 {
-                    if (MessageBox.Show("There's an update available! Do you want to download it?", "Game Launcher", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                    == DialogResult.Yes)
+                    if (MessageBox.Show("There's an update available! Do you want to download it?", "GameLauncher", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
-                        var folderBrowserDlg = new FolderBrowserDialog();
-                        folderBrowserDlg.Description = "Select an folder where to download the latest \"*.zip\" of GameLauncher.";
-                        folderBrowserDlg.RootFolder = Environment.SpecialFolder.Desktop;
-                        folderBrowserDlg.ShowNewFolderButton = true;
+                        var folderBrowserDlg = new FolderBrowserDialog
+                        {
+                            Description = "Select an folder where to download the latest \"*.zip\" of GameLauncher.",
+                            RootFolder = Environment.SpecialFolder.Desktop,
+                            ShowNewFolderButton = true
+                        };
                         if (folderBrowserDlg.ShowDialog() == DialogResult.OK)
                         {
                             if (string.IsNullOrEmpty(folderBrowserDlg.SelectedPath))
@@ -95,12 +89,11 @@ namespace GameLauncher
                                 MessageBox.Show(
                                     string.Format("\"{0}\" has been downloaded into \"{1}\"!\n" +
                                     "Extract the archive using File Explorer or any program that can be associated with the \"*.zip\" type.",
-                                    ReleaseUtil.ZipFileName, folderBrowserDlg.SelectedPath), "Game Launcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    ReleaseUtil.ZipFileName, folderBrowserDlg.SelectedPath), "GameLauncher", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 Application.Exit();
                             };
 
-                            ReleaseUtil.DownloadLatestRelease(folderBrowserDlg.SelectedPath + "/" + ReleaseUtil.ZipFileName)
-                                .ConfigureAwait(false).GetAwaiter().GetResult();
+                            ReleaseUtil.DownloadLatestRelease($"{folderBrowserDlg.SelectedPath}/{ReleaseUtil.ZipFileName}").ConfigureAwait(false).GetAwaiter().GetResult();
                         }
                     }
                 }
@@ -111,14 +104,15 @@ namespace GameLauncher
 
                 MessageBoxManager.Abort = "Scan";
                 MessageBoxManager.Retry =
-                MessageBoxManager.Cancel = "Browse";
+                    MessageBoxManager.Cancel = "Browse";
                 MessageBoxManager.Register();
-                Application.Run(new Launcher());
-                MessageBoxManager.Unregister();
 
+                Application.Run(new Launcher());
+                
+                MessageBoxManager.Unregister();
                 _mutex.ReleaseMutex();
 
-                LoggingUtil.Info($"Goodbye, {Environment.UserName}!");
+                LoggingUtil.Info($"Goodbye!");
             }
             catch (Exception e)
             {

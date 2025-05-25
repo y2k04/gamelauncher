@@ -40,26 +40,12 @@ public static class LoggingUtil
     private static string FormatMessage(string level, string message, string filePath, int ln)
     {
         var fileName = Path.GetFileName(filePath);
-        var curDate = DateTime.Now.ToString("ddMMyy");
-        var curTime = DateTime.Now.ToString("hhmmss");
+        var curDateTime = DateTime.Now.ToString("HH:mm:ss");
         var builder = new StringBuilder();
-        builder.Append("[");
-        builder.Append(Process.GetCurrentProcess().Id);
-        builder.Append(":");
-        builder.Append(Environment.CurrentManagedThreadId);
-        builder.Append(":");
-        builder.Append(curDate);
-        builder.Append(".");
-        builder.Append(curTime);
-        builder.Append(":");
-        builder.Append(level);
-        builder.Append(":");
-        builder.Append(fileName);
-        builder.Append(":");
-        builder.Append(ln);
-        builder.Append("] ");
-        builder.Append(message);
-
+        if (Program.IsDeveloperMode)
+            builder.Append($"[{curDateTime}] ({fileName}:{ln}) {level} - {message}");
+        else
+            builder.Append($"[{curDateTime}] {level} - {message}");
         return builder.ToString();
     }
 

@@ -30,10 +30,8 @@ namespace GameLauncher
         public Launcher()
         {
             InitializeComponent();
-            gameList.DrawMode = TreeViewDrawMode.OwnerDrawText;
-            gameList.DrawNode += GameList_DrawNode;
             SetupLauncher();
-            LoggingUtil.Info("Binding event: \"ProcessCheck_Tick\" to \"processCheck.Tick\"");
+            LoggingUtil.Debug("Binding event: \"processCheck.Tick\"");
             processCheck.Tick += ProcessCheck_Tick;
             LoggingUtil.Info("Launcher window has been initialized!");
         }
@@ -57,18 +55,13 @@ namespace GameLauncher
             }
             else if (string.IsNullOrEmpty(rawData))
             {
-                config = new()
-                {
-                    Games = new(),
-                    FavouritesToggled = false
-                };
-
+                config = new() { Games = [], FavouritesToggled = false };
                 UpdateData();
             }
             else
             {
                 config = JsonConvert.DeserializeObject<Config>(rawData);
-                config.Games = config.Games.OrderBy(x => x.Name).ToList();
+                config.Games = [.. config.Games.OrderBy(x => x.Name)];
             }
 
             UpdateGameList();
@@ -86,6 +79,31 @@ namespace GameLauncher
                     selectedGameArt.Visible =
                     playTimeContainer.Visible = false;
             }
+        }
+
+        private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            LoggingUtil.Debug("Unregistering event: \"processCheck.Tick\"");
+            processCheck.Tick -= ProcessCheck_Tick;
+            processCheck.Enabled = false;
+
+            var keysToRemove = new List<Game>();
+            foreach (var timer in gameTimers)
+            {
+                timer.Value.Enabled = false;
+                config.Games[config.Games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
+                keysToRemove.Add(timer.Key);
+            }
+
+            foreach (var key in keysToRemove)
+            {
+                gameTimers.Remove(key);
+            }
+
+            UpdateData();
+            stream.Close();
+
+            LoggingUtil.Info("Closing main launcher window...");
         }
 
         private void UpdateData()
@@ -122,7 +140,7 @@ namespace GameLauncher
 
         private void TryFixMissingGame(int index)
         {
-            LoggingUtil.Error("Selected game could not be found!");
+            LoggingUtil.Error("Selected game could not be found.");
             var errormsg = MessageBox.Show($"The game you have selected could not be found.{Environment.NewLine}" +
                 $"Did you want us to check if it is on another drive,{Environment.NewLine}" +
                 $"manually select the new location, or ignore it?", "Game not found", MessageBoxButtons.AbortRetryIgnore);
@@ -167,7 +185,7 @@ namespace GameLauncher
 
             if (newPath == "")
             {
-                LoggingUtil.Error("Selected game could not be found!");
+                LoggingUtil.Error("Selected game still couldn't be found.");
                 var errormsg = MessageBox.Show($"The game still can't be found.{Environment.NewLine}" +
                     $"Did you want to select it yourself or ignore it?", "Scan failed", MessageBoxButtons.RetryCancel);
                 switch (errormsg)
@@ -185,6 +203,7 @@ namespace GameLauncher
             }
             else
             {
+                LoggingUtil.Info("Selected game was found.");
                 var msg = MessageBox.Show($"The game was found on your {newPath.Substring(0, 1)} drive.{Environment.NewLine}" +
                     $"Did you want to save these changes?", "Scan success", MessageBoxButtons.YesNo);
 
@@ -224,11 +243,15 @@ namespace GameLauncher
                     launchGame.Text = "Play";
                     launchGame.Enabled = true;
                 }
+            } else
+            {
+                LoggingUtil.Info("Cancelled manually finding selected game.");
             }
         }
 
         private void UpdateGameList()
         {
+            LoggingUtil.Info("Reloading games list...");
             gameList.Nodes.Clear();
             var filtered = config.FavouritesToggled ? [.. config.Games.Where(g => g.IsFavorite)] : config.Games;
             foreach (var game in filtered)
@@ -309,7 +332,7 @@ namespace GameLauncher
                 if (!File.Exists(editor.gameArtwork.Text) || editor.gameArtwork.Text == string.Empty)
                     editor.gameArtwork.Text = "";
 
-                var game = new Game(
+                Game game = new(
                     editor.gameName.Text,
                     editor.gameLocation.Text,
                     editor.gameArguments.Text,
@@ -326,7 +349,7 @@ namespace GameLauncher
                 editGameButton.Enabled = deleteGameButton.Enabled = true;
                 emptyLibraryNote.Visible = false;
 
-                LoggingUtil.Info($"Added game to the list: {editor.gameName.Text}");
+                LoggingUtil.Info($"Added new game: {editor.gameName.Text}");
             }
         }
 
@@ -356,13 +379,15 @@ namespace GameLauncher
                     selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
 
                 UpdateData();
+                LoggingUtil.Info($"Updated game: {selectedGame.Name}");
             }
         }
 
         private void deleteGameButton_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show($"Are you sure you want to delete '{selectedGame.Name}'?", "Game Launcher", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show($"Are you sure you want to delete '{selectedGame.Name}'?", "GameLauncher", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
+                LoggingUtil.Info($"Deleting {selectedGame.Name}...");
                 config.Games.RemoveRange(gameList.SelectedNode.Index, 1);
                 gameList.Nodes.Remove(gameList.SelectedNode);
                 if (gameList.Nodes.Count != 0)
@@ -420,31 +445,6 @@ namespace GameLauncher
                 e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
 
             e.DrawDefault = false;
-        }
-
-        private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            LoggingUtil.Info("Unregistering event: \"processCheck.Tick\"");
-            processCheck.Tick -= ProcessCheck_Tick;
-            processCheck.Enabled = false;
-
-            var keysToRemove = new List<Game>();
-            foreach (var timer in gameTimers)
-            {
-                timer.Value.Enabled = false;
-                config.Games[config.Games.LastIndexOf(timer.Key)].PlayTime = Convert.ToDouble(timer.Value.Tag);
-                keysToRemove.Add(timer.Key);
-            }
-
-            foreach (var key in keysToRemove)
-            {
-                gameTimers.Remove(key);
-            }
-
-            UpdateData();
-            stream.Close();
-
-            LoggingUtil.Info("Closing main launcher window...");
         }
     }
 }
