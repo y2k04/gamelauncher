@@ -10,9 +10,9 @@
  - [x] Add custom art (Uses the game icon by default)
  - [x] Track play time in minutes and hours
  - [x] Detects if a game has gone missing and provides a guided fixing process
+ - [x] Checks for launcher updates
 
 ## Planned features
- - [ ] Check for updates
  - [ ] Add similar guided fixing process for missing game artwork.
 <br>
 
