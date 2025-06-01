@@ -59,7 +59,7 @@ namespace GameLauncher
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -82,14 +82,13 @@ namespace GameLauncher
             // 
             this.gameList.ContextMenuStrip = this.menu;
             this.gameList.Controls.Add(this.emptyLibraryNote);
-            this.gameList.DrawMode = TreeViewDrawMode.OwnerDrawText;
-            this.gameList.DrawNode += GameList_DrawNode;
             this.gameList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gameList.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
             this.gameList.Font = new System.Drawing.Font("Segoe UI", 12F);
             this.gameList.FullRowSelect = true;
             this.gameList.HideSelection = false;
             this.gameList.Location = new System.Drawing.Point(0, 0);
-            this.gameList.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.gameList.Margin = new System.Windows.Forms.Padding(4);
             this.gameList.Name = "gameList";
             this.gameList.ShowLines = false;
             this.gameList.Size = new System.Drawing.Size(353, 554);
@@ -145,9 +144,8 @@ namespace GameLauncher
             // 
             // favoritestoggle
             // 
-            this.favoritestoggle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.favoritestoggle.Location = new System.Drawing.Point(574, 522);
-            this.favoritestoggle.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.favoritestoggle.Location = new System.Drawing.Point(575, 522);
+            this.favoritestoggle.Margin = new System.Windows.Forms.Padding(4);
             this.favoritestoggle.Name = "favoritestoggle";
             this.favoritestoggle.Size = new System.Drawing.Size(129, 28);
             this.favoritestoggle.TabIndex = 4;
@@ -162,8 +160,8 @@ namespace GameLauncher
             this.playTimeContainer.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.playTimeContainer.Controls.Add(this.playTimeLabel);
             this.playTimeContainer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeContainer.Location = new System.Drawing.Point(574, 315);
-            this.playTimeContainer.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.playTimeContainer.Location = new System.Drawing.Point(571, 315);
+            this.playTimeContainer.Margin = new System.Windows.Forms.Padding(4);
             this.playTimeContainer.MaximumSize = new System.Drawing.Size(0, 53);
             this.playTimeContainer.MinimumSize = new System.Drawing.Size(133, 53);
             this.playTimeContainer.Name = "playTimeContainer";
@@ -189,7 +187,7 @@ namespace GameLauncher
             // 
             this.launchGame.Font = new System.Drawing.Font("Segoe UI", 14.25F);
             this.launchGame.Location = new System.Drawing.Point(47, 388);
-            this.launchGame.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.launchGame.Margin = new System.Windows.Forms.Padding(4);
             this.launchGame.MaximumSize = new System.Drawing.Size(173, 44);
             this.launchGame.Name = "launchGame";
             this.launchGame.Size = new System.Drawing.Size(173, 44);
@@ -216,7 +214,7 @@ namespace GameLauncher
             this.selectedGameArt.BackColor = System.Drawing.SystemColors.ButtonShadow;
             this.selectedGameArt.Dock = System.Windows.Forms.DockStyle.Top;
             this.selectedGameArt.Location = new System.Drawing.Point(0, 0);
-            this.selectedGameArt.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.selectedGameArt.Margin = new System.Windows.Forms.Padding(4);
             this.selectedGameArt.Name = "selectedGameArt";
             this.selectedGameArt.Size = new System.Drawing.Size(709, 315);
             this.selectedGameArt.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -230,7 +228,7 @@ namespace GameLauncher
             this.ClientSize = new System.Drawing.Size(1067, 554);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MinimumSize = new System.Drawing.Size(1082, 591);
             this.Name = "Launcher";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

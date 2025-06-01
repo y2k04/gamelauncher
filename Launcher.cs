@@ -31,6 +31,7 @@ namespace GameLauncher
         {
             InitializeComponent();
             SetupLauncher();
+            gameList.DrawNode += GameList_DrawNode;
             LoggingUtil.Debug("Binding event: \"processCheck.Tick\"");
             processCheck.Tick += ProcessCheck_Tick;
             LoggingUtil.Info("Launcher window has been initialized!");
@@ -442,7 +443,7 @@ namespace GameLauncher
                 e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Left + offset, bounds.Top);
             }
             else
-                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
+                e.Graphics.DrawString(name, gameList.Font, textBrush, e.Bounds);
 
             e.DrawDefault = false;
         }
