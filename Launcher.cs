@@ -48,7 +48,7 @@ namespace GameLauncher
             {
                 config = new()
                 {
-                    Games = JsonConvert.DeserializeObject<List<Game>>(rawData).OrderBy(x => x.Name).ToList(),
+                    Games = [.. JsonConvert.DeserializeObject<List<Game>>(rawData).OrderBy(x => x.Name)],
                     FavouritesToggled = false
                 };
 
@@ -117,8 +117,8 @@ namespace GameLauncher
         {
             if (e.Node?.Tag is not Game game)
                 return;
-
-            if (game.Name != selectedGame.Name)
+            //MessageBox.Show("wtf");
+            if (game != selectedGame)
             {
                 selectedGameName.Visible =
                     launchGame.Visible =
@@ -253,6 +253,7 @@ namespace GameLauncher
         private void UpdateGameList()
         {
             LoggingUtil.Info("Reloading games list...");
+            var CurrentNode = gameList.SelectedNode == null ? 0:gameList.SelectedNode.Index;
             gameList.Nodes.Clear();
             var filtered = config.FavouritesToggled ? [.. config.Games.Where(g => g.IsFavorite)] : config.Games;
             foreach (var game in filtered)
@@ -267,6 +268,7 @@ namespace GameLauncher
             }
             favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
             favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
+            gameList.SelectedNode = gameList.Nodes[CurrentNode];
         }
 
         private void launchGame_Click(object sender, EventArgs e)
@@ -405,7 +407,6 @@ namespace GameLauncher
                     emptyLibraryNote.Visible = true;
                 }
                 UpdateData();
-                UpdateGameList();
             }
         }
 
@@ -441,8 +442,8 @@ namespace GameLauncher
             if (game.IsFavorite)
             {
                 float offset = e.Graphics.MeasureString(StarChar, StarFont).Width;
-                e.Graphics.DrawString(StarChar, StarFont, StarBrush, bounds.Location);
-                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Left + offset, bounds.Top);
+                e.Graphics.DrawString(StarChar, StarFont, StarBrush, new PointF(bounds.Left - offset, bounds.Top + 3));
+                e.Graphics.DrawString(name, gameList.Font, textBrush, bounds.Location);
             }
             else
                 e.Graphics.DrawString(name, gameList.Font, textBrush, e.Bounds);
