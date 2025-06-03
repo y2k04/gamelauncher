@@ -380,6 +380,7 @@ namespace GameLauncher
                     selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
 
                 UpdateData();
+                UpdateGameList();
                 LoggingUtil.Info($"Updated game: {selectedGame.Name}");
             }
         }
@@ -404,6 +405,7 @@ namespace GameLauncher
                     emptyLibraryNote.Visible = true;
                 }
                 UpdateData();
+                UpdateGameList();
             }
         }
 
