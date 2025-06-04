@@ -117,7 +117,6 @@ namespace GameLauncher
         {
             if (e.Node?.Tag is not Game game)
                 return;
-            //MessageBox.Show("wtf");
             if (game != selectedGame)
             {
                 selectedGameName.Visible =
@@ -268,7 +267,8 @@ namespace GameLauncher
             }
             favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
             favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
-            gameList.SelectedNode = gameList.Nodes[CurrentNode];
+            if (gameList.Nodes.Count != 0)
+                gameList.SelectedNode = gameList.Nodes[CurrentNode];
         }
 
         private void launchGame_Click(object sender, EventArgs e)
@@ -412,6 +412,8 @@ namespace GameLauncher
 
         private void favoritesToggle_Click(object sender, EventArgs e)
         {
+            if (gameList.Nodes.Count != 0)
+                gameList.SelectedNode = gameList.TopNode;
             config.FavouritesToggled = !config.FavouritesToggled;
             UpdateData();
             UpdateGameList();
@@ -420,7 +422,7 @@ namespace GameLauncher
             selectedGameName.Visible =
                     launchGame.Visible =
                     selectedGameArt.Visible =
-                    playTimeContainer.Visible = false;
+                    playTimeContainer.Visible = gameList.Nodes.Count != 0;
 
             favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
             favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;

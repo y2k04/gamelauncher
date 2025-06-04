@@ -160,7 +160,7 @@ namespace GameLauncher
             this.playTimeContainer.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.playTimeContainer.Controls.Add(this.playTimeLabel);
             this.playTimeContainer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeContainer.Location = new System.Drawing.Point(570, 315);
+            this.playTimeContainer.Location = new System.Drawing.Point(567, 315);
             this.playTimeContainer.Margin = new System.Windows.Forms.Padding(4);
             this.playTimeContainer.MaximumSize = new System.Drawing.Size(0, 53);
             this.playTimeContainer.MinimumSize = new System.Drawing.Size(133, 53);
