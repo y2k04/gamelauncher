@@ -40,24 +40,25 @@ namespace GameLauncher
             this.deleteGameButton = new System.Windows.Forms.ToolStripMenuItem();
             this.emptyLibraryNote = new System.Windows.Forms.Label();
             this.favoritestoggle = new System.Windows.Forms.Button();
-            this.playTimeContainer = new System.Windows.Forms.GroupBox();
-            this.playTimeLabel = new System.Windows.Forms.Label();
             this.launchGame = new System.Windows.Forms.Button();
             this.selectedGameName = new System.Windows.Forms.Label();
             this.selectedGameArt = new System.Windows.Forms.PictureBox();
+            this.playTimeContainer = new System.Windows.Forms.GroupBox();
+            this.playTimeLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.gameList.SuspendLayout();
             this.menu.SuspendLayout();
-            this.playTimeContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.selectedGameArt)).BeginInit();
+            this.playTimeContainer.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.IsSplitterFixed = true;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
             this.splitContainer1.Margin = new System.Windows.Forms.Padding(4);
             this.splitContainer1.Name = "splitContainer1";
@@ -69,13 +70,12 @@ namespace GameLauncher
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.favoritestoggle);
-            this.splitContainer1.Panel2.Controls.Add(this.playTimeContainer);
             this.splitContainer1.Panel2.Controls.Add(this.launchGame);
             this.splitContainer1.Panel2.Controls.Add(this.selectedGameName);
             this.splitContainer1.Panel2.Controls.Add(this.selectedGameArt);
-            this.splitContainer1.Size = new System.Drawing.Size(1067, 554);
-            this.splitContainer1.SplitterDistance = 353;
-            this.splitContainer1.SplitterWidth = 5;
+            this.splitContainer1.Panel2.Controls.Add(this.playTimeContainer);
+            this.splitContainer1.Size = new System.Drawing.Size(1064, 544);
+            this.splitContainer1.SplitterDistance = 352;
             this.splitContainer1.TabIndex = 0;
             // 
             // gameList
@@ -91,7 +91,7 @@ namespace GameLauncher
             this.gameList.Margin = new System.Windows.Forms.Padding(4);
             this.gameList.Name = "gameList";
             this.gameList.ShowLines = false;
-            this.gameList.Size = new System.Drawing.Size(353, 554);
+            this.gameList.Size = new System.Drawing.Size(352, 544);
             this.gameList.TabIndex = 0;
             this.gameList.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.gameList_AfterSelect);
             // 
@@ -137,7 +137,7 @@ namespace GameLauncher
             this.emptyLibraryNote.Location = new System.Drawing.Point(0, 0);
             this.emptyLibraryNote.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.emptyLibraryNote.Name = "emptyLibraryNote";
-            this.emptyLibraryNote.Size = new System.Drawing.Size(349, 551);
+            this.emptyLibraryNote.Size = new System.Drawing.Size(349, 537);
             this.emptyLibraryNote.TabIndex = 1;
             this.emptyLibraryNote.Text = "Right-click to access menu";
             this.emptyLibraryNote.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -152,36 +152,6 @@ namespace GameLauncher
             this.favoritestoggle.Text = "Toggle Favorites";
             this.favoritestoggle.UseVisualStyleBackColor = true;
             this.favoritestoggle.Click += new System.EventHandler(this.favoritesToggle_Click);
-            // 
-            // playTimeContainer
-            // 
-            this.playTimeContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.playTimeContainer.AutoSize = true;
-            this.playTimeContainer.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.playTimeContainer.Controls.Add(this.playTimeLabel);
-            this.playTimeContainer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeContainer.Location = new System.Drawing.Point(567, 315);
-            this.playTimeContainer.Margin = new System.Windows.Forms.Padding(4);
-            this.playTimeContainer.MaximumSize = new System.Drawing.Size(0, 53);
-            this.playTimeContainer.MinimumSize = new System.Drawing.Size(133, 53);
-            this.playTimeContainer.Name = "playTimeContainer";
-            this.playTimeContainer.Padding = new System.Windows.Forms.Padding(4, 20, 27, 4);
-            this.playTimeContainer.Size = new System.Drawing.Size(133, 53);
-            this.playTimeContainer.TabIndex = 3;
-            this.playTimeContainer.TabStop = false;
-            this.playTimeContainer.Text = "Play Time";
-            // 
-            // playTimeLabel
-            // 
-            this.playTimeLabel.AutoSize = true;
-            this.playTimeLabel.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeLabel.Location = new System.Drawing.Point(4, 28);
-            this.playTimeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.playTimeLabel.Name = "playTimeLabel";
-            this.playTimeLabel.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
-            this.playTimeLabel.Size = new System.Drawing.Size(71, 23);
-            this.playTimeLabel.TabIndex = 0;
-            this.playTimeLabel.Text = "0 hours";
             // 
             // launchGame
             // 
@@ -216,21 +186,53 @@ namespace GameLauncher
             this.selectedGameArt.Location = new System.Drawing.Point(0, 0);
             this.selectedGameArt.Margin = new System.Windows.Forms.Padding(4);
             this.selectedGameArt.Name = "selectedGameArt";
-            this.selectedGameArt.Size = new System.Drawing.Size(709, 315);
+            this.selectedGameArt.Size = new System.Drawing.Size(708, 315);
             this.selectedGameArt.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.selectedGameArt.TabIndex = 0;
             this.selectedGameArt.TabStop = false;
+            // 
+            // playTimeContainer
+            // 
+            this.playTimeContainer.AutoSize = true;
+            this.playTimeContainer.Controls.Add(this.playTimeLabel);
+            this.playTimeContainer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.playTimeContainer.Location = new System.Drawing.Point(571, 323);
+            this.playTimeContainer.Margin = new System.Windows.Forms.Padding(4);
+            this.playTimeContainer.MaximumSize = new System.Drawing.Size(0, 53);
+            this.playTimeContainer.MinimumSize = new System.Drawing.Size(133, 53);
+            this.playTimeContainer.Name = "playTimeContainer";
+            this.playTimeContainer.Padding = new System.Windows.Forms.Padding(4, 20, 27, 4);
+            this.playTimeContainer.Size = new System.Drawing.Size(133, 53);
+            this.playTimeContainer.TabIndex = 6;
+            this.playTimeContainer.TabStop = false;
+            this.playTimeContainer.Text = "Play Time";
+            // 
+            // playTimeLabel
+            // 
+            this.playTimeLabel.AutoSize = true;
+            this.playTimeLabel.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.playTimeLabel.Location = new System.Drawing.Point(4, 28);
+            this.playTimeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.playTimeLabel.Name = "playTimeLabel";
+            this.playTimeLabel.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
+            this.playTimeLabel.Size = new System.Drawing.Size(71, 23);
+            this.playTimeLabel.TabIndex = 0;
+            this.playTimeLabel.Text = "0 hours";
             // 
             // Launcher
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1067, 554);
+            this.ClientSize = new System.Drawing.Size(1064, 544);
             this.Controls.Add(this.splitContainer1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(1082, 591);
             this.MinimumSize = new System.Drawing.Size(1082, 591);
             this.Name = "Launcher";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "GameLauncher";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Launcher_FormClosing);
@@ -241,9 +243,9 @@ namespace GameLauncher
             this.splitContainer1.ResumeLayout(false);
             this.gameList.ResumeLayout(false);
             this.menu.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.selectedGameArt)).EndInit();
             this.playTimeContainer.ResumeLayout(false);
             this.playTimeContainer.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.selectedGameArt)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -259,10 +261,10 @@ namespace GameLauncher
         private System.Windows.Forms.PictureBox selectedGameArt;
         private System.Windows.Forms.Label selectedGameName;
         private System.Windows.Forms.Button launchGame;
-        private System.Windows.Forms.GroupBox playTimeContainer;
-        private System.Windows.Forms.Label playTimeLabel;
         private System.Windows.Forms.Label emptyLibraryNote;
         private System.Windows.Forms.Button favoritestoggle;
+        private GroupBox playTimeContainer;
+        private Label playTimeLabel;
     }
 }
 

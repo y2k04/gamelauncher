@@ -8,6 +8,7 @@
         public string ArtworkPath { get; set; }
         public double PlayTime { get; set; }
         public bool IsFavorite { get; set; }
+        public string Uuid { get; set; }
 
         public Game(
             string name = "",
@@ -15,7 +16,8 @@
             string arguments = "",
             string artworkPath = "",
             double playTime = 0,
-            bool isFavorite = false
+            bool isFavorite = false,
+            string uuid = ""
         )
         {
             Name = name;
@@ -24,6 +26,7 @@
             ArtworkPath = artworkPath;
             PlayTime = playTime;
             IsFavorite = isFavorite;
+            Uuid = uuid;
         }
     }
 }

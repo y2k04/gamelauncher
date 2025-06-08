@@ -1,5 +1,6 @@
 ﻿using GameLauncher.Util;
 using Newtonsoft.Json;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -39,7 +40,7 @@ namespace GameLauncher
 
         private async void SetupLauncher()
         {
-            stream = File.Open(configJSON, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            stream = File.Open(configJSON, System.IO.FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream) { AutoFlush = true };
 
@@ -65,21 +66,16 @@ namespace GameLauncher
                 config.Games = [.. config.Games.OrderBy(x => x.Name)];
             }
 
-            UpdateGameList();
+            // Creates UUID for games created without one
+            foreach (Game game in config.Games)
+                if (string.IsNullOrEmpty(game.Uuid))
+                {
+                    game.Uuid = Guid.NewGuid().ToString();
+                    LoggingUtil.Info($"{game.Name} UUID was empty and now is {game.Uuid}");
+                }
 
-            if (gameList.Nodes.Count != 0)
-            {
-                gameList.SelectedNode = gameList.TopNode;
-                editGameButton.Enabled = deleteGameButton.Enabled = true;
-                emptyLibraryNote.Visible = false;
-            }
-            else
-            {
-                selectedGameName.Visible =
-                    launchGame.Visible =
-                    selectedGameArt.Visible =
-                    playTimeContainer.Visible = false;
-            }
+            UpdateGameList();
+            setGameDisplay();
         }
 
         private void Launcher_FormClosing(object sender, FormClosingEventArgs e)
@@ -119,22 +115,8 @@ namespace GameLauncher
                 return;
             if (game != selectedGame)
             {
-                selectedGameName.Visible =
-                    launchGame.Visible =
-                    selectedGameArt.Visible =
-                    playTimeContainer.Visible = true;
-
                 selectedGame = game;
-                selectedGameName.Text = selectedGame.Name;
-                playTimeLabel.Text = Helpers.FormatPlayTime(selectedGame.PlayTime);
-
-                if (string.IsNullOrWhiteSpace(selectedGame.ArtworkPath))
-                    selectedGameArt.Image = Helpers.GetIcon(selectedGame.Location);
-                else
-                    selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
-
-                if (!File.Exists(selectedGame.Location))
-                    TryFixMissingGame(config.Games.IndexOf(selectedGame));
+                setGameDisplay();
             }
         }
 
@@ -252,7 +234,6 @@ namespace GameLauncher
         private void UpdateGameList()
         {
             LoggingUtil.Info("Reloading games list...");
-            var CurrentNode = gameList.SelectedNode == null ? 0:gameList.SelectedNode.Index;
             gameList.Nodes.Clear();
             var filtered = config.FavouritesToggled ? [.. config.Games.Where(g => g.IsFavorite)] : config.Games;
             foreach (var game in filtered)
@@ -267,8 +248,42 @@ namespace GameLauncher
             }
             favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
             favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
-            if (gameList.Nodes.Count != 0)
-                gameList.SelectedNode = gameList.Nodes[CurrentNode];
+
+            foreach (TreeNode node in gameList.Nodes)
+            {
+                var game = node.Tag as Game;
+                if (game.Uuid == selectedGame.Uuid)
+                    gameList.SelectedNode = node;
+            }
+            if (gameList.SelectedNode == null && gameList.Nodes.Count != 0)
+                gameList.SelectedNode = gameList.TopNode;
+        }
+
+        private void setGameDisplay()
+        {
+            bool active = gameList.Nodes.Count != 0;
+
+            editGameButton.Enabled = deleteGameButton.Enabled = active;
+            emptyLibraryNote.Visible = !active;
+
+            selectedGameName.Visible =
+            launchGame.Visible =
+            selectedGameArt.Visible =
+            playTimeContainer.Visible = active;
+
+            if (!active)
+                return;
+
+            selectedGameName.Text = selectedGame.Name;
+            playTimeLabel.Text = Helpers.FormatPlayTime(selectedGame.PlayTime);
+
+            if (string.IsNullOrWhiteSpace(selectedGame.ArtworkPath))
+                selectedGameArt.Image = Helpers.GetIcon(selectedGame.Location);
+            else
+                selectedGameArt.ImageLocation = selectedGame.ArtworkPath;
+
+            if (!File.Exists(selectedGame.Location))
+                TryFixMissingGame(config.Games.IndexOf(selectedGame));
         }
 
         private void launchGame_Click(object sender, EventArgs e)
@@ -341,16 +356,16 @@ namespace GameLauncher
                     editor.gameArguments.Text,
                     editor.gameArtwork.Text,
                     0,
-                    editor.FavoriteChecked
+                    editor.FavoriteChecked,
+                    Guid.NewGuid().ToString()
                 );
                 config.Games.Add(game);
 
+                selectedGame = game;
+
                 UpdateData();
                 UpdateGameList();
-
-                gameList.SelectedNode = gameList.TopNode;
-                editGameButton.Enabled = deleteGameButton.Enabled = true;
-                emptyLibraryNote.Visible = false;
+                setGameDisplay();
 
                 LoggingUtil.Info($"Added new game: {editor.gameName.Text}");
             }
@@ -367,7 +382,8 @@ namespace GameLauncher
                     editor.gameArguments.Text,
                     editor.gameArtwork.Text,
                     selectedGame.PlayTime,
-                    editor.FavoriteChecked
+                    editor.FavoriteChecked,
+                    selectedGame.Uuid
                 );
 
                 selectedGame = config.Games[gameList.SelectedNode.Index];
@@ -396,33 +412,18 @@ namespace GameLauncher
                 gameList.Nodes.Remove(gameList.SelectedNode);
                 if (gameList.Nodes.Count != 0)
                     gameList.SelectedNode = gameList.TopNode;
-                else
-                {
-                    selectedGameName.Visible =
-                        launchGame.Visible =
-                        selectedGameArt.Visible =
-                        playTimeContainer.Visible =
-                        editGameButton.Enabled =
-                        deleteGameButton.Enabled = false;
-                    emptyLibraryNote.Visible = true;
-                }
+
                 UpdateData();
+                setGameDisplay();
             }
         }
 
         private void favoritesToggle_Click(object sender, EventArgs e)
         {
-            if (gameList.Nodes.Count != 0)
-                gameList.SelectedNode = gameList.TopNode;
             config.FavouritesToggled = !config.FavouritesToggled;
             UpdateData();
             UpdateGameList();
-            selectedGame = new();
-
-            selectedGameName.Visible =
-                    launchGame.Visible =
-                    selectedGameArt.Visible =
-                    playTimeContainer.Visible = gameList.Nodes.Count != 0;
+            setGameDisplay();
 
             favoritestoggle.BackColor = config.FavouritesToggled ? Color.IndianRed : SystemColors.Control;
             favoritestoggle.ForeColor = config.FavouritesToggled ? Color.LightYellow : SystemColors.ControlText;
