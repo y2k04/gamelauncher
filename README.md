@@ -14,6 +14,7 @@
 
 ## Planned features
  - [ ] Add similar guided fixing process for missing game artwork.
+ - [ ] Upgrade update process (in-place upgrade)
 <br>
 
 ## Screenshots
