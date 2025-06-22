@@ -1,8 +1,11 @@
-﻿using System;
+﻿using GameLauncher.Util;
+using KPreisser.UI;
+using Newtonsoft.Json;
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using GameLauncher.Util;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -66,9 +69,34 @@ namespace GameLauncher
                 }
 
                 LoggingUtil.Info("Checking for updates...");
-                if (ReleaseUtil.CheckForUpdates().ConfigureAwait(false).GetAwaiter().GetResult())
+                
+                Version dismissedVersion;
+                using (FileStream stream = File.Open($@"{Environment.CurrentDirectory}\config.json", System.IO.FileMode.OpenOrCreate, FileAccess.Read, FileShare.None))
+                using (var reader = new StreamReader(stream))
                 {
-                    if (MessageBox.Show("There's an update available! Do you want to download it?", "GameLauncher", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    var config = JsonConvert.DeserializeObject<Config>(reader.ReadToEnd());
+                    dismissedVersion = new(config.DismissedUpdate);
+                }
+
+                if (dismissedVersion == null)
+                    dismissedVersion = new("0");
+
+                if (ReleaseUtil.CheckForUpdates().ConfigureAwait(false).GetAwaiter().GetResult() && dismissedVersion < ReleaseUtil.LatestVersion)
+                {
+                    TaskDialog updateDialog = new(new()
+                    {
+                        Title = "GameLauncher",
+                        Instruction = "A new update is available!",
+                        Text = "Do you want to download it?",
+                        CustomButtons = [new TaskDialogCustomButton("Yes"), new TaskDialogCustomButton("No"), new TaskDialogCustomButton("Dismiss till next update")],
+                        Expander = new() {Text = $"You are running v{ReleaseUtil.CurrentVersion}. The latest version is <a href=\"https://github.com/y2k04/gamelauncher/releases/tag/v{ReleaseUtil.LatestVersion}\">v{ReleaseUtil.LatestVersion}</a>.", ExpandFooterArea = true},
+                        Icon = TaskDialogStandardIcon.Information,
+                        EnableHyperlinks = true
+                    });
+                    updateDialog.Page.HyperlinkClicked += (_, e) => Process.Start(e.Hyperlink);
+
+                    TaskDialogButton result = updateDialog.Show();
+                    if (result == updateDialog.Page.CustomButtons[0])
                     {
                         var folderBrowserDlg = new FolderBrowserDialog
                         {
@@ -84,41 +112,63 @@ namespace GameLauncher
                             if (!Directory.Exists(folderBrowserDlg.SelectedPath))
                                 throw new DirectoryNotFoundException("The selected directory is invalid!");
 
+                            TaskDialog downloadProgress = new(new()
+                            {
+                                Title = "GameLauncher",
+                                Instruction = $"Downloading v{ReleaseUtil.LatestVersion}...",
+                                Text = "0% complete",
+                                ProgressBar = new()
+                            });
+
                             ReleaseUtil.DownloadFileCompleted += (sender, e) =>
                             {
-                                MessageBox.Show(
-                                    string.Format("\"{0}\" has been downloaded into \"{1}\"!\n" +
-                                    "Extract the archive using File Explorer or any program that can be associated with the \"*.zip\" type.",
-                                    ReleaseUtil.ZipFileName, folderBrowserDlg.SelectedPath), "GameLauncher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                downloadProgress.Close();
+                                new TaskDialog(new()
+                                {
+                                    Title = "GameLauncher",
+                                    Instruction = $"Version {ReleaseUtil.LatestVersion} has been downloaded!",
+                                    Text = $"Extract the archive using File Explorer or any program that can be associated with the \"*.zip\" type.\n\nIt is located at: \"{folderBrowserDlg.SelectedPath}\".",
+                                    StandardButtons = [new TaskDialogStandardButton(TaskDialogResult.OK)],
+                                    Icon = TaskDialogStandardIcon.SecuritySuccessGreenBar
+                                }).Show();
                                 Application.Exit();
                             };
 
-                            ReleaseUtil.DownloadLatestRelease($"{folderBrowserDlg.SelectedPath}/{ReleaseUtil.ZipFileName}").ConfigureAwait(false).GetAwaiter().GetResult();
+                            ReleaseUtil.DownloadProgressChanged += (s, e) =>
+                            {
+                                var p = e.ProgressPercentage;
+                                downloadProgress.SetProgressBarPosition(p);
+                                downloadProgress.Page.Text = $"{p}% complete";
+                            };
+
+                            downloadProgress.Shown += (s, e) => ReleaseUtil.DownloadLatestRelease($"{folderBrowserDlg.SelectedPath}/{ReleaseUtil.ZipFileName}").ConfigureAwait(false).GetAwaiter().GetResult();
+                            downloadProgress.Show();
                         }
+                    } else if (result == updateDialog.Page.CustomButtons[1])
+                    {
+                        LoggingUtil.Info("Update cancelled. Will ask again on next launch.");
+                        Application.Run(new Launcher());
+                    }
+                    else if (result == updateDialog.Page.CustomButtons[2])
+                    {
+                        LoggingUtil.Info($"Ignoring v{ReleaseUtil.LatestVersion} until next release.");
+                        Application.Run(new Launcher(ReleaseUtil.LatestVersion.ToString()));
                     }
                 }
                 else
                 {
                     LoggingUtil.Info("Client up-to-date with the latest version.");
+                    Application.Run(new Launcher());
                 }
 
-                MessageBoxManager.Abort = "Scan";
-                MessageBoxManager.Retry =
-                    MessageBoxManager.Cancel = "Browse";
-                MessageBoxManager.Register();
-
-                Application.Run(new Launcher());
                 
-                MessageBoxManager.Unregister();
                 _mutex.ReleaseMutex();
-
                 LoggingUtil.Info($"Goodbye!");
             }
             catch (Exception e)
             {
-                var excBox = new ExceptionBox(e);
                 LoggingUtil.Error($"FATAL ERROR: {e.Message}");
-                excBox.ShowDialog();
+                new ExceptionBox(e).ShowDialog();
             }
 
             return 0;

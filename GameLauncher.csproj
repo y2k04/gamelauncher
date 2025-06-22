@@ -44,6 +44,9 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -69,8 +72,37 @@
     <Compile Include="Config.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Helpers\Helpers.cs" />
-    <Compile Include="Helpers\MessageBoxManager.cs" />
     <Compile Include="Helpers\SysCalls\IImageList.cs" />
+    <Compile Include="Helpers\TaskDialog\TaskDialog.cs" />
+    <Compile Include="Helpers\TaskDialog\Handlers\TaskDialog.WindowSubclassHandler.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogButton.cs" />
+    <Compile Include="Helpers\TaskDialog\Handlers\TaskDialogButtonClickedEventArgs.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogButtons.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogCheckbox.cs" />
+    <Compile Include="Helpers\TaskDialog\Handlers\TaskDialogClosingEventArgs.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogControl.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogCustomButton.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogCustomButtonCollection.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogCustomButtonStyle.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogExpander.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogFooter.cs" />
+    <Compile Include="Helpers\TaskDialog\Handlers\TaskDialogHyperlinkClickedEventArgs.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogIcon.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogIconHandle.cs" />
+    <Compile Include="Helpers\TaskDialog\NativeMethods\TaskDialogNativeMethods.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogPage.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogProgressBar.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogProgressBarState.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogRadioButton.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogRadioButtonCollection.cs" />
+    <Compile Include="Helpers\TaskDialog\TaskDialogResult.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogStandardButton.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogStandardButtonCollection.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogStandardIcon.cs" />
+    <Compile Include="Helpers\TaskDialog\Controls\TaskDialogStandardIconContainer.cs" />
+    <Compile Include="Helpers\TaskDialog\TaskDialogStartupLocation.cs" />
+    <Compile Include="Helpers\TaskDialog\Handlers\WindowSubclassHandler.cs" />
+    <Compile Include="Helpers\TaskDialog\NativeMethods\WindowSubclassHandlerNativeMethods.cs" />
     <Compile Include="Launcher.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -112,6 +144,7 @@
     </Compile>
     <None Include=".editorconfig" />
     <None Include="app.config" />
+    <None Include="app.manifest" />
     <None Include="Properties\packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

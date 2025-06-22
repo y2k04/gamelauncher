@@ -1,9 +1,9 @@
-﻿using System;
-using Octokit;
-using System.Threading.Tasks;
-using System.Reflection;
-using System.Net;
+﻿using Octokit;
+using System;
 using System.ComponentModel;
+using System.Net;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace GameLauncher.Util;
 
@@ -12,7 +12,8 @@ namespace GameLauncher.Util;
 /// </summary>
 public static class ReleaseUtil
 {
-    private static string _curVersion = "v" + Assembly.GetEntryAssembly().GetName().Version.ToString();
+    public static Version CurrentVersion = Assembly.GetEntryAssembly().GetName().Version;
+    public static Version LatestVersion = new("1.0.0");
     private static string _zipFile = "GameLauncher-{0}.zip";
     public static string ZipFileName { get => _zipFile; }
     private const string RepoOrg = "y2k04";
@@ -28,28 +29,26 @@ public static class ReleaseUtil
     /// <returns>Returns true when the latest version is higher than the current.</returns>
     public static async Task<bool> CheckForUpdates()
     {
-        if (_curVersion == null)
+        if (CurrentVersion == null)
         {
-            LoggingUtil.Warn("_curVersion is null!"); 
+            LoggingUtil.Warn("I don't know how, but CurrentVersion is null..."); 
             return false;
         }
 
         try
         {
-            var ghClient = new GitHubClient(new ProductHeaderValue("GameLauncher", _curVersion));
-            var releases = await ghClient.Repository.Release.GetAll(RepoOrg, RepoName);
-            var latestRel = releases[0];
+            var ghClient = new GitHubClient(new ProductHeaderValue("GameLauncher", $"v{CurrentVersion}"));
+            var latestRel = await ghClient.Repository.Release.GetLatest(RepoOrg, RepoName);
 
             if (latestRel != null)
             {
-                // Parse versions for comparison  
-                var currentVersion = new Version(_curVersion.TrimStart('v').TrimEnd());
-                var latestVersion = new Version(latestRel.TagName.TrimStart('v').TrimEnd());
+                // Parse versions for comparison
+                LatestVersion = new Version(latestRel.TagName.TrimStart('v').TrimEnd());
 
-                LoggingUtil.Info($"Comparing client version {currentVersion.ToString()} to latest version from remote {latestVersion.ToString()}");
+                LoggingUtil.Info($"Comparing client version {CurrentVersion} to latest version from remote {LatestVersion}");
                 _zipFile = string.Format(_zipFile, latestRel.TagName);
 
-                return currentVersion < latestVersion;
+                return CurrentVersion < LatestVersion;
             }
 
             LoggingUtil.Warn("latestRel is null!");
@@ -73,9 +72,8 @@ public static class ReleaseUtil
         {
             if (!await CheckForUpdates()) return;
 
-            var ghClient = new GitHubClient(new ProductHeaderValue("GameLauncher", _curVersion));
-            var releases = await ghClient.Repository.Release.GetAll(RepoOrg, RepoName);
-            var latestRel = releases[0];
+            var ghClient = new GitHubClient(new ProductHeaderValue("GameLauncher", $"v{CurrentVersion}"));
+            var latestRel = await ghClient.Repository.Release.GetLatest(RepoOrg, RepoName);
 
             if (latestRel != null)
             {

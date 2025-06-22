@@ -1,6 +1,6 @@
 ﻿using GameLauncher.Util;
+using KPreisser.UI;
 using Newtonsoft.Json;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,14 +31,24 @@ namespace GameLauncher
         public Launcher()
         {
             InitializeComponent();
-            SetupLauncher();
+            SetupLauncher(null);
             gameList.DrawNode += GameList_DrawNode;
             LoggingUtil.Debug("Binding event: \"processCheck.Tick\"");
             processCheck.Tick += ProcessCheck_Tick;
             LoggingUtil.Info("Launcher window has been initialized!");
         }
 
-        private async void SetupLauncher()
+        public Launcher(string dismissedVersion)
+        {
+            InitializeComponent();
+            SetupLauncher(dismissedVersion);
+            gameList.DrawNode += GameList_DrawNode;
+            LoggingUtil.Debug("Binding event: \"processCheck.Tick\"");
+            processCheck.Tick += ProcessCheck_Tick;
+            LoggingUtil.Info("Launcher window has been initialized!");
+        }
+
+        private async void SetupLauncher(string dismissedVersion)
         {
             stream = File.Open(configJSON, System.IO.FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             reader = new StreamReader(stream);
@@ -73,6 +83,11 @@ namespace GameLauncher
                     game.Uuid = Guid.NewGuid().ToString();
                     LoggingUtil.Info($"{game.Name} UUID was empty and now is {game.Uuid}");
                 }
+
+            if (dismissedVersion != null) {
+                config.DismissedUpdate = dismissedVersion;
+                UpdateData();
+            }
 
             UpdateGameList();
             setGameDisplay();
@@ -123,25 +138,24 @@ namespace GameLauncher
         private void TryFixMissingGame(int index)
         {
             LoggingUtil.Error("Selected game could not be found.");
-            var errormsg = MessageBox.Show($"The game you have selected could not be found.{Environment.NewLine}" +
-                $"Did you want us to check if it is on another drive,{Environment.NewLine}" +
-                $"manually select the new location, or ignore it?", "Game not found", MessageBoxButtons.AbortRetryIgnore);
-
-            switch (errormsg)
+            TaskDialog msg = new(new()
             {
-                /*Scan*/
-                case DialogResult.Abort:
-                    TryScanMissingGame(index);
-                    break;
-                /*Browse*/
-                case DialogResult.Retry:
-                    TryBrowseMissingGame(index);
-                    break;
-                /*Ignore*/
-                default:
-                    launchGame.Text = "Not found";
-                    launchGame.Enabled = false;
-                    break;
+                Title = "GameLauncher",
+                Instruction = "Game not found",
+                Text = "The game you have selected could not be found.\nDid you want us to check if it is on another drive,\nmanually select the new location, or ignore it?",
+                CustomButtons = [new TaskDialogCustomButton("Scan"), new TaskDialogCustomButton("Browse"), new TaskDialogCustomButton("Ignore")],
+                Icon = TaskDialogStandardIcon.Error
+            });
+
+            TaskDialogButton result = msg.Show();
+
+            if (result == msg.Page.CustomButtons[0])
+                TryScanMissingGame(index);
+            else if (result == msg.Page.CustomButtons[1])
+                TryBrowseMissingGame(index);
+            else {
+                launchGame.Text = "Not found";
+                launchGame.Enabled = false;
             }
         }
 
@@ -168,39 +182,49 @@ namespace GameLauncher
             if (newPath == "")
             {
                 LoggingUtil.Error("Selected game still couldn't be found.");
-                var errormsg = MessageBox.Show($"The game still can't be found.{Environment.NewLine}" +
-                    $"Did you want to select it yourself or ignore it?", "Scan failed", MessageBoxButtons.RetryCancel);
-                switch (errormsg)
+                TaskDialog msg = new(new()
                 {
-                    /*Browse*/
-                    case DialogResult.Retry:
-                        TryBrowseMissingGame(index);
-                        break;
-                    /*Ignore*/
-                    default:
-                        launchGame.Text = "Not found";
-                        launchGame.Enabled = false;
-                        break;
+                    Title = "GameLauncher",
+                    Instruction = "Scan failed",
+                    Text = "The game still can't be found.\nDid you want to select it yourself or ignore it?",
+                    CustomButtons = [new TaskDialogCustomButton("Browse"), new TaskDialogCustomButton("Ignore")],
+                    Icon = TaskDialogStandardIcon.Error
+                });
+
+                TaskDialogButton result = msg.Show();
+
+                if (result == msg.Page.CustomButtons[0])
+                    TryBrowseMissingGame(index);
+                else
+                {
+                    launchGame.Text = "Not found";
+                    launchGame.Enabled = false;
                 }
             }
             else
             {
                 LoggingUtil.Info("Selected game was found.");
-                var msg = MessageBox.Show($"The game was found on your {newPath.Substring(0, 1)} drive.{Environment.NewLine}" +
-                    $"Did you want to save these changes?", "Scan success", MessageBoxButtons.YesNo);
-
-                switch (msg)
+                TaskDialog msg = new(new()
                 {
-                    case DialogResult.Yes:
-                        selectedGame.Location = config.Games[index].Location = newPath;
-                        UpdateData();
-                        launchGame.Text = "Play";
-                        launchGame.Enabled = true;
-                        break;
-                    default:
-                        launchGame.Text = "Not found";
-                        launchGame.Enabled = false;
-                        break;
+                    Title = "GameLauncher",
+                    Instruction = "Scan success!",
+                    Text = $"The game was found on your {newPath.Substring(0, 1)} drive.\nDid you want to save the new location?",
+                    StandardButtons = [new TaskDialogStandardButton(TaskDialogResult.Yes), new TaskDialogStandardButton(TaskDialogResult.No)],
+                    Icon = TaskDialogStandardIcon.SecuritySuccessGreenBar
+                });
+
+                TaskDialogButton result = msg.Show();
+
+                if (result == msg.Page.StandardButtons[TaskDialogResult.Yes])
+                {
+                    selectedGame.Location = config.Games[index].Location = newPath;
+                    UpdateData();
+                    launchGame.Text = "Play";
+                    launchGame.Enabled = true;
+                } else
+                {
+                    launchGame.Text = "Not found";
+                    launchGame.Enabled = false;
                 }
             }
         }
@@ -217,8 +241,18 @@ namespace GameLauncher
             };
             if (file.ShowDialog() == DialogResult.OK)
             {
-                var confirm = MessageBox.Show("Are you sure you want to save these changes?", "Manual search", MessageBoxButtons.YesNo);
-                if (confirm == DialogResult.Yes)
+                TaskDialog msg = new(new()
+                {
+                    Title = "GameLauncher",
+                    Instruction = "Manual search",
+                    Text = "Are you sure you want to save these changes?",
+                    StandardButtons = [new TaskDialogStandardButton(TaskDialogResult.Yes), new TaskDialogStandardButton(TaskDialogResult.No)],
+                    Icon = TaskDialogStandardIcon.Information
+                });
+
+                TaskDialogButton result = msg.Show();
+
+                if (result == msg.Page.StandardButtons[TaskDialogResult.Yes])
                 {
                     selectedGame.Location = config.Games[index].Location = file.FileName;
                     UpdateData();
@@ -299,7 +333,14 @@ namespace GameLauncher
             catch (Exception ex)
             {
                 LoggingUtil.Error($"Error launching game \"{selectedGame.Name}\": \"{ex.Message}\"");
-                MessageBox.Show(ex.Message, "Error launching game", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                new TaskDialog(new()
+                {
+                    Title = "GameLauncher",
+                    Instruction = "Error launching game",
+                    Text = ex.Message,
+                    StandardButtons = [new TaskDialogStandardButton(TaskDialogResult.OK)],
+                    Icon = TaskDialogStandardIcon.Error
+                });
             }
         }
 
