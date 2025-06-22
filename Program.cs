@@ -74,12 +74,14 @@ namespace GameLauncher
                 using (FileStream stream = File.Open($@"{Environment.CurrentDirectory}\config.json", System.IO.FileMode.OpenOrCreate, FileAccess.Read, FileShare.None))
                 using (var reader = new StreamReader(stream))
                 {
-                    var config = JsonConvert.DeserializeObject<Config>(reader.ReadToEnd());
-                    dismissedVersion = new(config.DismissedUpdate);
-                }
+                    var raw = reader.ReadToEnd();
+                    var config = JsonConvert.DeserializeObject<Config>(raw);
 
-                if (dismissedVersion == null)
-                    dismissedVersion = new("0");
+                    if (config.DismissedUpdate == null)
+                        dismissedVersion = new("0.0");
+                    else
+                        dismissedVersion = new(config.DismissedUpdate);
+                }
 
                 if (ReleaseUtil.CheckForUpdates().ConfigureAwait(false).GetAwaiter().GetResult() && dismissedVersion < ReleaseUtil.LatestVersion)
                 {
