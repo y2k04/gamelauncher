@@ -69,7 +69,7 @@ namespace GameLauncher
                 }
 
                 LoggingUtil.Info("Checking for updates...");
-                
+
                 Version dismissedVersion;
                 using (FileStream stream = File.Open($@"{Environment.CurrentDirectory}\config.json", System.IO.FileMode.OpenOrCreate, FileAccess.Read, FileShare.None))
                 using (var reader = new StreamReader(stream))
@@ -77,7 +77,7 @@ namespace GameLauncher
                     var raw = reader.ReadToEnd();
                     var config = JsonConvert.DeserializeObject<Config>(raw);
 
-                    if (config.DismissedUpdate == null)
+                    if (config == null || config.DismissedUpdate == null)
                         dismissedVersion = new("0.0");
                     else
                         dismissedVersion = new(config.DismissedUpdate);
@@ -91,7 +91,7 @@ namespace GameLauncher
                         Instruction = "A new update is available!",
                         Text = "Do you want to download it?",
                         CustomButtons = [new TaskDialogCustomButton("Yes"), new TaskDialogCustomButton("No"), new TaskDialogCustomButton("Dismiss till next update")],
-                        Expander = new() {Text = $"You are running v{ReleaseUtil.CurrentVersion}. The latest version is <a href=\"https://github.com/y2k04/gamelauncher/releases/tag/v{ReleaseUtil.LatestVersion}\">v{ReleaseUtil.LatestVersion}</a>.", ExpandFooterArea = true},
+                        Expander = new() { Text = $"You are running v{ReleaseUtil.CurrentVersion}. The latest version is <a href=\"https://github.com/y2k04/gamelauncher/releases/tag/v{ReleaseUtil.LatestVersion}\">v{ReleaseUtil.LatestVersion}</a>.", ExpandFooterArea = true },
                         Icon = TaskDialogStandardIcon.Information,
                         EnableHyperlinks = true
                     });
@@ -146,7 +146,8 @@ namespace GameLauncher
                             downloadProgress.Shown += (s, e) => ReleaseUtil.DownloadLatestRelease($"{folderBrowserDlg.SelectedPath}/{ReleaseUtil.ZipFileName}").ConfigureAwait(false).GetAwaiter().GetResult();
                             downloadProgress.Show();
                         }
-                    } else if (result == updateDialog.Page.CustomButtons[1])
+                    }
+                    else if (result == updateDialog.Page.CustomButtons[1])
                     {
                         LoggingUtil.Info("Update cancelled. Will ask again on next launch.");
                         Application.Run(new Launcher());
@@ -163,7 +164,7 @@ namespace GameLauncher
                     Application.Run(new Launcher());
                 }
 
-                
+
                 _mutex.ReleaseMutex();
                 LoggingUtil.Info($"Goodbye!");
             }
