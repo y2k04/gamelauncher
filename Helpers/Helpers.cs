@@ -19,7 +19,7 @@ namespace GameLauncher
             if (time == 0)
                 return "Never";
             else if (time < 60)
-                return "Less than a minute";
+                return "<1 minute";
             else if (time / 3600f < 1f)
             {
                 var mins = (int)Math.Round(time / 60f, 0, MidpointRounding.ToEven);

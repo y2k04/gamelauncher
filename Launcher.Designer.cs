@@ -143,7 +143,8 @@ namespace GameLauncher
             // 
             // favoritestoggle
             // 
-            this.favoritestoggle.Location = new System.Drawing.Point(575, 522);
+            this.favoritestoggle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.favoritestoggle.Location = new System.Drawing.Point(575, 512);
             this.favoritestoggle.Margin = new System.Windows.Forms.Padding(4);
             this.favoritestoggle.Name = "favoritestoggle";
             this.favoritestoggle.Size = new System.Drawing.Size(129, 28);
@@ -192,31 +193,34 @@ namespace GameLauncher
             // 
             // playTimeContainer
             // 
+            this.playTimeContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.playTimeContainer.AutoSize = true;
+            this.playTimeContainer.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.playTimeContainer.Controls.Add(this.playTimeLabel);
             this.playTimeContainer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeContainer.Location = new System.Drawing.Point(571, 323);
+            this.playTimeContainer.Location = new System.Drawing.Point(541, 332);
             this.playTimeContainer.Margin = new System.Windows.Forms.Padding(4);
-            this.playTimeContainer.MaximumSize = new System.Drawing.Size(0, 53);
-            this.playTimeContainer.MinimumSize = new System.Drawing.Size(133, 53);
+            this.playTimeContainer.MaximumSize = new System.Drawing.Size(138, 61);
+            this.playTimeContainer.MinimumSize = new System.Drawing.Size(138, 61);
             this.playTimeContainer.Name = "playTimeContainer";
             this.playTimeContainer.Padding = new System.Windows.Forms.Padding(4, 20, 27, 4);
-            this.playTimeContainer.Size = new System.Drawing.Size(133, 53);
+            this.playTimeContainer.Size = new System.Drawing.Size(138, 61);
             this.playTimeContainer.TabIndex = 6;
             this.playTimeContainer.TabStop = false;
             this.playTimeContainer.Text = "Play Time";
             // 
             // playTimeLabel
             // 
-            this.playTimeLabel.AutoSize = true;
             this.playTimeLabel.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playTimeLabel.Location = new System.Drawing.Point(4, 28);
+            this.playTimeLabel.Location = new System.Drawing.Point(8, 24);
             this.playTimeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.playTimeLabel.MaximumSize = new System.Drawing.Size(119, 33);
+            this.playTimeLabel.MinimumSize = new System.Drawing.Size(119, 33);
             this.playTimeLabel.Name = "playTimeLabel";
             this.playTimeLabel.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
-            this.playTimeLabel.Size = new System.Drawing.Size(71, 23);
+            this.playTimeLabel.Size = new System.Drawing.Size(119, 33);
             this.playTimeLabel.TabIndex = 0;
-            this.playTimeLabel.Text = "0 hours";
+            this.playTimeLabel.Text = "Never";
             // 
             // Launcher
             // 
@@ -240,7 +244,6 @@ namespace GameLauncher
             this.menu.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.selectedGameArt)).EndInit();
             this.playTimeContainer.ResumeLayout(false);
-            this.playTimeContainer.PerformLayout();
             this.ResumeLayout(false);
 
         }
