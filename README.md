@@ -1,3 +1,7 @@
+### Moved to https://git.gay/y2k4/gamelauncher
+
+---
+
 <p align="center"><img src="https://github.com/user-attachments/assets/abb25b17-65a3-4ea2-a88e-3575ae49cf20"></p>
 
 <h1 align="center">GameLauncher</h1>
